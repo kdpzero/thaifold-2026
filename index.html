@@ -12,7 +12,7 @@
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-<meta name="app-version" content="6a1eb3a8c7">
+<meta name="app-version" content="610cfd9bae">
 <style>
 /* Layout: egy oszlop, bal oldali sávban a haladás; fent állapotösszegzés, alatta határidők, repülők, checklista. */
 :root{
@@ -215,11 +215,74 @@ table.docs tr.checked td:not(.chk){color:var(--muted);text-decoration:line-throu
 .nav .refresh{margin-left:auto;flex:none;border-radius:8px;padding:8px 14px;font-weight:600;white-space:nowrap}
 .nav .refresh:disabled{opacity:.7;cursor:default}
 .nav .refresh.has-new{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.modebar{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;margin-top:12px}
+.seg{display:inline-flex;border:2px solid var(--ink);border-radius:12px;overflow:hidden;background:var(--surface)}
+.seg button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:0;border-radius:0;padding:10px 18px;background:transparent;color:var(--ink);text-align:left}
+.seg button+button{border-left:2px solid var(--ink)}
+.seg button b{font:800 1.1rem/1.1 var(--display)}
+.seg button small{font-size:.8rem;color:var(--muted)}
+.seg button[aria-checked="true"]{background:var(--ink);color:var(--bg)}
+.seg button[aria-checked="true"] small{color:var(--bg);opacity:.8}
+.defchk{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.95rem}
+.defchk input{width:20px;height:20px;accent-color:var(--accent)}
+.stack{display:flex;flex-direction:column;gap:14px}
 footer{color:var(--muted);font-size:.88rem}
 @media (max-width:520px){
   .dl{grid-template-columns:auto 1fr}
   .dl .pill{grid-column:2;justify-self:start}
   .dl .date{grid-column:1/-1}
+}
+
+/* Mobil */
+@media (max-width:640px){
+  body{font-size:15.5px}
+  .wrap{padding:16px 12px 64px;gap:24px}
+  h2{font-size:1.3rem}
+  .clocks{display:grid;grid-template-columns:1fr 1fr}
+  .clock{min-width:0}
+  .modebar{flex-direction:column;align-items:stretch;gap:10px}
+  .seg{display:flex;width:100%}
+  .seg button{flex:1;padding:10px 12px}
+  .seg button b{font-size:1rem}
+  .nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:6px}
+  .nav::-webkit-scrollbar{display:none}
+  .nav a,.nav button{flex:none;white-space:nowrap}
+  .progress{padding:12px 14px}
+  .progress .big{font-size:2rem}
+  .item{padding:12px 12px}
+  .item input,.dl input,table.docs input{width:24px;height:24px}
+  .group>header{padding:10px 12px}
+  .dl{padding:12px}
+  .sum{grid-template-columns:1fr 1fr}
+  .sum b{font-size:1.1rem}
+  .sum .total{grid-column:1/-1}
+  .contacts{grid-template-columns:1fr}
+  .flights{grid-template-columns:1fr}
+  .tools button{flex:1 1 auto}
+  .scroll{overflow-x:visible}
+  table.costs,table.route,table.bagt{min-width:0;border:0;background:transparent}
+  table.costs thead,table.route thead,table.bagt thead{display:none}
+  table.costs,table.costs tbody,table.costs tfoot,table.costs tr,table.costs td,table.costs th,
+  table.route,table.route tbody,table.route tr,table.route td,
+  table.bagt,table.bagt tbody,table.bagt tr,table.bagt td{display:block}
+  table.costs tr,table.route tr,table.bagt tr{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:0 0 8px;padding:10px 12px}
+  table.costs tr[hidden],table.route tr[hidden]{display:none}
+  table.costs tr.sec{background:transparent;border:0;padding:10px 0 2px;margin:0}
+  table.costs tr.sec th{display:block;padding:8px 10px;font-size:1rem;border-radius:6px}
+  table.costs tr:not(.sec){display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px}
+  table.costs td,table.costs th{padding:0;border:0;background:transparent}
+  table.costs td:first-child{flex:1 1 100%;font-weight:600}
+  table.costs td:empty{display:none}
+  table.costs td:nth-child(2),table.costs td:nth-child(3){font-size:.85rem;color:var(--muted)}
+  table.costs td.n{white-space:nowrap}
+  table.costs td.n:last-child{margin-left:auto;font-weight:700}
+  table.costs td[colspan]{flex:1 1 auto}
+  table.costs tfoot tr.ftot{background:var(--accent);border-color:var(--accent)}
+  table.costs tfoot tr.ftot td{color:var(--accent-ink);padding:2px 0}
+  table.costs tfoot td{border:0}
+  table.route td{padding:0;border:0}
+  table.route td:first-child{white-space:normal;margin-bottom:4px}
+  table.bagt td{padding:2px 0;border:0}
 }
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
@@ -228,9 +291,16 @@ footer{color:var(--muted);font-size:.88rem}
 <div class="wrap">
 
 <header>
-  <span class="tag">WDBF világbajnokság · Bangkok · dec. 4–14.</span>
+  <span class="tag" id="tagLine">WDBF világbajnokság · Bangkok</span>
   <h1>Thaiföld 2026 útinapló</h1>
-  <p class="lead">Rövidebb csoport: hazaindulás december 13-án este. A pipák ezen az eszközön maradnak meg, ha bezárod az oldalt.</p>
+  <p class="lead" id="leadLine"></p>
+  <div class="modebar" id="modebar">
+    <div class="seg" role="radiogroup" aria-label="Út kiválasztása">
+      <button type="button" role="radio" data-set-mode="rovid" aria-checked="true"><b>Rövid út</b><small>hazautazás dec. 13–14.</small></button>
+      <button type="button" role="radio" data-set-mode="hosszu" aria-checked="false"><b>Hosszú út</b><small>hazautazás dec. 17–18.</small></button>
+    </div>
+    <label class="defchk"><input type="checkbox" id="modeDefault"><span id="modeDefaultText">Legyen ez az alapértelmezett</span></label>
+  </div>
   <div class="clocks" id="clocks" aria-label="Pontos idő"></div>
 </header>
 
@@ -264,15 +334,27 @@ footer{color:var(--muted);font-size:.88rem}
 <section class="block" id="sec-flights" data-page="utazas">
   <div class="bh"><h2>Repülőjáratok</h2><p class="sub">Helyi idő. Az odaút mindenkinek közös, a hazaút a te csoportodé.</p></div>
   <div class="flights" id="flights"></div>
-  <h3>Hazaút napja, dec. 13–14.</h3>
-  <ol class="tl">
-    <li class="pending"><b class="t">Még nincs</b><span>Indulás a szállásról, kijelentkezés és csomagtárolás<small>A pontos időt és a transzfert Zsolt külön egyezteti. Ennél korábban kell elindulni, mint a reptéri célidő.</small></span><em>dec. 13.</em></li>
-    <li><b class="t">15:05</b><span>Reptéren kell lenned<small>4 órás előérkezéssel számolva, útlevéllel.</small></span><em>dec. 13.</em></li>
-    <li><b class="t">19:05</b><span>MU8612 indulás<small>Bangkok BKK → Sanghaj PVG</small></span><em>dec. 13.</em></li>
-    <li><b class="t">00:20</b><span>Érkezés Sanghajba<small>Átszállás 2 óra 5 perc, városnézés nincs.</small></span><em>dec. 14.</em></li>
-    <li><b class="t">02:25</b><span>MU8639 indulás<small>Sanghaj PVG → Budapest BUD</small></span><em>dec. 14.</em></li>
-    <li><b class="t">07:05</b><span>Érkezés Budapestre<small>Helyi idő.</small></span><em>dec. 14.</em></li>
-  </ol>
+  <h3 id="tlTitle"></h3>
+  <ol class="tl" id="tl"></ol>
+  <div class="stack" data-mode="hosszu">
+    <h3>Sanghaji megálló, dec. 17–18.</h3>
+    <div class="scroll">
+    <table class="route">
+      <thead><tr><th>Téma</th><th>Tudnivaló</th></tr></thead>
+      <tbody>
+        <tr><td>Belépés Kínába</td><td>A kínai nagykövetség tájékoztatása szerint magyar magánútlevéllel turizmusra és tranzitra legfeljebb 30 napos vízummentes tartózkodás lehetséges. A belépésről a határhatóság dönt. Más útlevélnél külön szabályellenőrzés kell.</td></tr>
+        <tr><td>Arrival Card</td><td>A tranzitterület elhagyásához töltsd ki az ingyenes kínai Arrival Cardot. Legyen nálad útlevél, továbbutazási igazolás és a csapat elérhetősége. Online és helyszíni kitöltés is lehetséges.</td></tr>
+        <tr><td>Kötelező visszaérkezés</td><td>A csapatvezető által megadott reptéri visszaérkezés kötelező. A hosszú megálló nem jelent 19 óra szabad városnézést.</td></tr>
+        <tr><td>Fizetés és mobilnet</td><td>Az Alipayt még itthon állítsd be. A thaiföldi mobilnet-csomag nem feltétlenül érvényes Kínában, ezért a sanghaji napra külön ellenőrizd. Kínában több Google- és közösségi szolgáltatás korlátozott lehet.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="links">
+      <a href="https://s.nia.gov.cn/ArrivalCardFillingPC/" target="_blank" rel="noopener noreferrer">Kínai Arrival Card</a>
+      <a href="https://hu.china-embassy.gov.cn/hu./lsyw/vizum1/202511/t20251105_11747190.htm" target="_blank" rel="noopener noreferrer">Vízummentesség, nagykövetségi tájékoztató</a>
+      <a href="https://en.nia.gov.cn/n147418/n147468/c187308/content.html" target="_blank" rel="noopener noreferrer">Arrival Card szabályok</a>
+    </div>
+  </div>
   <h3>Poggyász sztenderd jeggyel</h3>
   <div class="scroll">
   <table class="route bagt">
@@ -295,9 +377,9 @@ footer{color:var(--muted);font-size:.88rem}
     </tbody>
   </table>
   </div>
-  <p class="lead" style="margin:0">A szabályok a tájékoztatóban megadott China Eastern előírásokat követik. A MU8640, MU8639 és MU8612 járatot a foglalás szerint Shanghai Airlines üzemelteti, ezért indulás előtt az e-jegy és a légitársaság értesítése az irányadó. Ha a jegyed nem sztenderd tarifa, ott ellenőrizd a kereteket.
+  <p class="lead" style="margin:0">A szabályok a tájékoztatóban megadott China Eastern előírásokat követik. <span data-mode="rovid">A MU8640, MU8639 és MU8612 járatot</span><span data-mode="hosszu">A MU8640 és MU8639 járatot</span> a foglalás szerint Shanghai Airlines üzemelteti, ezért indulás előtt az e-jegy és a légitársaság értesítése az irányadó. Ha a jegyed nem sztenderd tarifa, ott ellenőrizd a kereteket.
   <br><a href="https://global.ceair.com/global/en_static/Announcement/BaggageService/CarryonBaggage/" target="_blank" rel="noopener noreferrer">China Eastern kézipoggyász</a> · <a href="https://global.ceair.com/global/en_USD/Announcement/BaggageService/FreeBaggageAllowanceandSpecifications/" target="_blank" rel="noopener noreferrer">Feladott poggyász</a></p>
-  <p class="note">A dec. 13-i MU8612 19:05-kor indul, ezért 15:05-re kell a reptérre érni. A szállásról ennél korábban indultok, a transzfer idejét Zsolt külön egyezteti. Sanghajban 2 óra 5 perc az átszállás, városnézés nincs.</p>
+  <p class="note" id="flightNote"></p>
 </section>
 
 <section class="block" id="sec-stay" data-page="utazas">
@@ -339,6 +421,7 @@ footer{color:var(--muted);font-size:.88rem}
     <tbody>
       <tr><td>Reptér → szállás</td><td>Airport Rail Link Suvarnabhumi → Makkasan, onnan rövid taxi vagy Grab. Vagy előre egyeztetett közös transzfer, sok bőröndnél ez praktikusabb. A díj és a jármű még nincs véglegesítve.</td></tr>
       <tr><td>Szállás → Union Hall</td><td>BTS Asok vagy Nana állomásra, onnan Sukhumvit-vonal a Ha Yaek Lat Phrao állomásig. Alternatíva: MRT Sukhumvit → Phahon Yothin. Gyaloglással és várakozással számolj 45–60 perccel.</td></tr>
+      <tr data-mode="hosszu"><td>Sanghaj, Pudong → belváros</td><td>A 2-es metróval elérhető a belváros. A People's Square menetideje nagyságrendileg egy óra, a beléptetésen és gyalogláson felül. A visszautat és az esti járatokat előre ellenőrizzük.<div class="links" style="margin-top:8px"><a href="https://english.shanghai.gov.cn/en-Transportation/20231214/649e06ea38f74aaeb573fa2debbe97d3.html" target="_blank" rel="noopener noreferrer">Sanghaj, reptéri közlekedési tájékoztató</a></div></td></tr>
       <tr><td>Verseny helyszíne</td><td>Union Hall, Union Mall, 54 Soi Lat Phrao 1, Chom Phon, Chatuchak, Bangkok 10900. BTS Ha Yaek Lat Phrao, 2-es kijárat, vagy MRT Phahon Yothin, 5-ös kijárat.<div class="links" style="margin-top:8px"><a href="https://www.google.com/maps/search/?api=1&amp;query=Union+Hall+Union+Mall+54+Soi+Lat+Phrao+1+Chom+Phon+Chatuchak+Bangkok+10900" target="_blank" rel="noopener noreferrer">Megnyitás térképen</a><a href="https://unionhallthailand.com/attend-an-event/" target="_blank" rel="noopener noreferrer">Union Hall, megközelítés</a></div></td></tr>
     </tbody>
   </table>
@@ -350,36 +433,18 @@ footer{color:var(--muted);font-size:.88rem}
   <div class="bh"><h2>Költségek</h2><p class="sub">Először az összesítés, alatta tételesen. Forintban és bahtban.</p></div>
   <div class="sum">
     <div><span>Itthon még befizetendő</span><b id="homeTile">88 900 Ft</b></div>
-    <div><span>Kint költésre, javasolt keret</span><b>75 200–122 200 Ft</b></div>
+    <div><span>Kint költésre, javasolt keret</span><b id="outTile"></b></div>
     <div id="customTile" hidden><span>Saját tételek</span><b id="customTileV">0 Ft</b></div>
     <div class="total"><span>Összesen</span><b id="totTile">164 100–211 100 Ft</b></div>
   </div>
   <div class="scroll">
   <table class="costs">
     <thead><tr><th>Tétel</th><th>Vonatkozik</th><th>Határidő</th><th class="n">Eredeti összeg</th><th class="n">Kb. Ft</th></tr></thead>
-    <tbody>
-      <tr class="sec"><th colspan="5">1. Itthon befizetendő (Papp Zsoltnak, forintban)</th></tr>
-      <tr data-dl="d-szallas" data-ft="77500"><td>Szállás, dec. 13-ig maradók</td><td>az egész útra</td><td>nov. 20.</td><td class="n">77 500 Ft</td><td class="n">77 500</td></tr>
-      <tr data-dl="d-biz" data-ft="11400"><td>Biztosítás, felnőtt, dec. 14-ig (32 500 Ft, jóváírással)</td><td>az egész útra</td><td>nov. 27.</td><td class="n">11 400 Ft</td><td class="n">11 400</td></tr>
-      <tr data-dl="d-nevezes" data-ft="0"><td>Nevezés (jóváírással)</td><td>egyszeri</td><td>dec. 4.</td><td class="n">0 Ft</td><td class="n">0</td></tr>
-      <tr class="sub"><td colspan="4">Itthon még befizetendő összesen</td><td class="n" id="homeSub">88 900</td></tr>
-      <tr id="allPaid" hidden><td colspan="5">Minden itthoni tétel ki van pipálva, nincs több befizetnivaló.</td></tr>
-
-      <tr class="sec"><th colspan="5">2. Helyi költés napi bontásban (dec. 5–13., 9 nap)</th></tr>
-      <tr><td>Étkezés és ivóvíz</td><td>naponta</td><td></td><td class="n">400–650 THB</td><td class="n">3 800–6 100</td></tr>
-      <tr><td>Városi közlekedés</td><td>naponta</td><td></td><td class="n">100–200 THB</td><td class="n">900–1 900</td></tr>
-      <tr><td>Kisebb kiadások</td><td>naponta</td><td></td><td class="n">100–150 THB</td><td class="n">900–1 400</td></tr>
-      <tr class="sub"><td colspan="3">Napi összesen</td><td class="n">600–1 000 THB</td><td class="n">5 600–9 400</td></tr>
-      <tr class="sub"><td colspan="3">Napi költés kilenc napra</td><td class="n">5 400–9 000 THB</td><td class="n">50 800–84 600</td></tr>
-
-      <tr class="sec"><th colspan="5">3. Javasolt készpénz- és kártyakeret</th></tr>
-      <tr><td>Napi költés, transzfer, internet és tartalék együtt</td><td>az egész útra</td><td></td><td class="n">8 000–13 000 THB</td><td class="n">75 200–122 200</td></tr>
-      <tr><td>Anyagi fedezet a határon (nem költség, csak be kell mutatni)</td><td>egyszeri</td><td></td><td class="n">20 000 THB</td><td class="n">188 000</td></tr>
-    </tbody>
+    <tbody id="costBody"></tbody>
     <tbody id="customBody"></tbody>
     <tfoot>
       <tr class="f1"><td colspan="4">Itthon még befizetendő (1. blokk)</td><td class="n" id="homeFoot">88 900 Ft</td></tr>
-      <tr class="f1"><td colspan="4">Kint javasolt keret (3. blokk, első sor)</td><td class="n">75 200–122 200 Ft</td></tr>
+      <tr class="f1"><td colspan="4">Kint javasolt keret (3. blokk)</td><td class="n" id="outFoot"></td></tr>
       <tr class="f1" id="customFootRow" hidden><td colspan="4">Saját tételek</td><td class="n" id="customFoot">0 Ft</td></tr>
       <tr class="ftot"><td colspan="4">Összesen</td><td class="n" id="totFoot">164 100–211 100 Ft</td></tr>
     </tfoot>
@@ -391,11 +456,11 @@ footer{color:var(--muted);font-size:.88rem}
       <input type="text" id="cName" placeholder="Pl. ajándék, taxi, masszázs" aria-label="Tétel neve" required maxlength="80">
       <input type="number" id="cAmt" placeholder="Összeg" aria-label="Összeg" min="0" step="any" required>
       <select id="cCur" aria-label="Pénznem"><option value="HUF">Ft</option><option value="THB">THB</option></select>
-      <select id="cScope" aria-label="Vonatkozik"><option value="egyszeri">egyszeri</option><option value="naponta">naponta (9 nap)</option><option value="egesz">az egész útra</option></select>
+      <select id="cScope" aria-label="Vonatkozik"><option value="egyszeri">egyszeri</option><option value="naponta">naponta</option><option value="egesz">az egész útra</option></select>
       <button type="submit">Hozzáadás</button>
     </div>
   </form>
-  <p class="lead" style="margin:0">Átszámítás kb. 9,4 Ft/THB árfolyammal, a váltási díj miatt a tényleges összeg eltérhet. Az összesítés nem tartalmazza a repülőjegyet (az már ki van fizetve), az esetleges vízumdíjat és a saját programokat. Az utalás adatait Zsolt tájékoztatójában találod.</p>
+  <p class="lead" style="margin:0">Átszámítás kb. 9,4 Ft/THB árfolyammal<span data-mode="hosszu"> és kb. 48 Ft/CNY árfolyammal</span>, a váltási díj miatt a tényleges összeg eltérhet. Az összesítés nem tartalmazza a repülőjegyet (az már ki van fizetve), az esetleges vízumdíjat és a saját programokat. Az utalás adatait Zsolt tájékoztatójában találod.</p>
 </section>
 
 <section class="block" id="lists" data-page="lista">
@@ -413,6 +478,7 @@ footer{color:var(--muted);font-size:.88rem}
       <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-5" aria-label="Szállásfoglalás"></td><td>Szállásfoglalás</td><td>Offline is elérhető.</td></tr>
       <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-6" aria-label="Szervezői meghívó"></td><td>Szervezői meghívó</td><td>Offline is elérhető.</td></tr>
       <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-7" aria-label="Biztosítás"></td><td>Biztosítás</td><td>Offline is elérhető.</td></tr>
+      <tr data-mode="hosszu"><td class="chk"><input type="checkbox" class="docchk" id="doc-9" aria-label="Kínai Arrival Card"></td><td>Kínai Arrival Card</td><td>A sanghaji városnézéshez kell, online vagy a helyszínen tölthető ki.</td></tr>
       <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-8" aria-label="Fontos telefonszámok"></td><td>Fontos telefonszámok</td><td>Offline is elérhető.</td></tr>
     </tbody>
   </table>
@@ -426,6 +492,7 @@ footer{color:var(--muted);font-size:.88rem}
     <div><b>Csapatkapcsolat</b><span>Zsolt: <a class="tel" href="tel:+36304640085">+36 30 464 0085</a></span></div>
     <div><b>Thaiföld</b><span>Rendőrség <a class="tel" href="tel:191">191</a> · Mentők <a class="tel" href="tel:1669">1669</a> · Turistarendőrség <a class="tel" href="tel:1155">1155</a></span></div>
     <div><b>Magyar nagykövetség, Bangkok</b><span><a class="tel" href="tel:+6621189600">+66 2 118 9600</a><br><a class="tel" href="mailto:consulate.bgk@mfa.gov.hu">consulate.bgk@mfa.gov.hu</a></span></div>
+    <div data-mode="hosszu"><b>Kína</b><span>Rendőrség <a class="tel" href="tel:110">110</a> · Mentők <a class="tel" href="tel:120">120</a></span></div>
     <div><b>Sürgős konzuli segítség</b><span><a class="tel" href="tel:+3680368036">+36 80 368 036</a></span></div>
   </div>
   <h3>Hasznos linkek</h3>
@@ -435,6 +502,9 @@ footer{color:var(--muted);font-size:.88rem}
     <a href="https://konzinfo.mfa.gov.hu/utazasi-tanacsok-orszagonkent/thaifold" target="_blank" rel="noopener noreferrer">Konzuli Szolgálat, Thaiföld</a>
     <a href="https://bangkok.mfa.gov.hu/en/konzuli-tajekoztatas" target="_blank" rel="noopener noreferrer">Bangkoki magyar nagykövetség</a>
     <a href="https://global.ceair.com/global/en_static/Announcement/BaggageService/CarryonBaggage/" target="_blank" rel="noopener noreferrer">China Eastern kézipoggyász</a>
+    <a data-mode="hosszu" href="https://s.nia.gov.cn/ArrivalCardFillingPC/" target="_blank" rel="noopener noreferrer">Kínai Arrival Card</a>
+    <a data-mode="hosszu" href="https://hu.china-embassy.gov.cn/hu./lsyw/vizum1/202511/t20251105_11747190.htm" target="_blank" rel="noopener noreferrer">Kínai vízummentesség</a>
+    <a data-mode="hosszu" href="https://english.shanghai.gov.cn/en-Transportation/20231214/649e06ea38f74aaeb573fa2debbe97d3.html" target="_blank" rel="noopener noreferrer">Sanghaj, reptéri közlekedés</a>
   </div>
   <p class="note">Powerbank: csak CE és CCC jelöléssel, legfeljebb 2 db, egyenként 100 Wh-ig, kizárólag kézipoggyászban. Repülés közben nem szabad tölteni. Nem vihető be e-cigaretta, vape, THC- vagy kannabisztermék.</p>
 </section>
@@ -451,21 +521,83 @@ footer{color:var(--muted);font-size:.88rem}
   try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch(e) { state = {}; }
   function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e) {} }
 
-  var deadlines = [
-    {id:"d-szallas", date:"2026-11-20", label:"nov. 20.", t:"Szállásdíj befizetése: 77 500 Ft", s:"Utalás Papp Zsoltnak, közlemény: a neved."},
-    {id:"d-biz", date:"2026-11-27", label:"nov. 27.", t:"Biztosítás díja: felnőtt 11 400 Ft", s:"A dec. 14-ig szóló csomag, a jóváírás levonása után."},
-    {id:"d-tdac", date:"2026-12-02", label:"dec. 2.", t:"TDAC kitöltése (dec. 2. és dec. 4. között)", s:"Érkezési járat: MU541, érkezési dátum: dec. 5. Mentsd el a visszaigazolást, nyomtasd ki.", l:[["TDAC kitöltése","https://tdac.immigration.go.th/"],["Kitöltési útmutató","https://tdac.immigration.go.th/manual/en/"]]},
-    {id:"d-konzinfo", date:"2026-12-04", label:"indulás előtt", t:"Konzuli regisztráció (Konzinfo)", s:"A tájékoztató nem ad rá külön határidőt. Intézd el indulás előtt, legkésőbb dec. 4-ig. Ország: Thaiföld. Az utazás célja: Turizmus. Az utazás típusa: Egyéni.", l:[["Konzinfo Ügysegéd","https://konzinfougyseged.mfa.gov.hu/"]]},
-    {id:"d-nevezes", date:"2026-12-04", label:"dec. 4.", t:"Nevezési díj", s:"Magyarországról indulóknak 0 Ft a jóváírás után. Ellenőrizd Zsoltnál."},
-    {id:"d-gyul", date:"2026-12-04", label:"dec. 4. 07:30", t:"Gyülekező a Liszt Ferenc repülőtéren", s:"Útlevéllel. A járat 11:30-kor indul (MU8640)."}
-  ];
+  // ---- Mód: rövid vagy hosszú út ----
+  var KEY3 = "thaifold2026-mode-v1";
+  var mstore = {default:null};
+  try { var mr = JSON.parse(localStorage.getItem(KEY3) || "null"); if(mr && (mr.default === "rovid" || mr.default === "hosszu")) mstore.default = mr.default; } catch(e) {}
+  function msave(){ try { localStorage.setItem(KEY3, JSON.stringify(mstore)); } catch(e) {} }
+  var MODE = mstore.default || "rovid";
 
-  var flights = [
-    {c:"MU8640", r:"Budapest → Sanghaj", t:"dec. 4. 11:30 → dec. 5. 05:25", home:false},
-    {c:"MU541", r:"Sanghaj → Bangkok", t:"dec. 5. 08:35 → 12:20", home:false},
-    {c:"MU8612", r:"Bangkok → Sanghaj", t:"dec. 13. 19:05 → dec. 14. 00:20", home:true},
-    {c:"MU8639", r:"Sanghaj → Budapest", t:"dec. 14. 02:25 → 07:05", home:true}
-  ];
+  var RATE = 9.4, CNYRATE = 48;
+  var PENDING_HOME = {p:1, t:"Még nincs", h:"Indulás a szállásról, kijelentkezés és csomagtárolás", s:"A pontos időt és a transzfert Zsolt külön egyezteti. Ennél korábban kell elindulni, mint a reptéri célidő."};
+  var CFG = {
+    rovid: {
+      name:"Rövid út",
+      tag:"WDBF világbajnokság · Bangkok · dec. 4–14.",
+      lead:"Rövidebb csoport: hazaindulás december 13-án este. A pipák ezen az eszközön maradnak meg, ha bezárod az oldalt.",
+      days:9, dayEnd:"13.",
+      stayFt:77500, stayLabel:"Szállás, dec. 13-ig maradók",
+      insFt:11400, insFull:23900, insUntil:"dec. 14-ig",
+      dayTot:[5400,9000], keret:[8000,13000], cny:null,
+      konz:"a kínai tranzitot is add meg",
+      home:[
+        {c:"MU8612", r:"Bangkok → Sanghaj", t:"dec. 13. 19:05 → dec. 14. 00:20"},
+        {c:"MU8639", r:"Sanghaj → Budapest", t:"dec. 14. 02:25 → 07:05"}
+      ],
+      tlTitle:"Hazaút napja, dec. 13–14.",
+      tl:[
+        {p:1, t:"Még nincs", h:PENDING_HOME.h, s:PENDING_HOME.s, d:"dec. 13."},
+        {t:"15:05", h:"Reptéren kell lenned", s:"4 órás előérkezéssel számolva, útlevéllel.", d:"dec. 13."},
+        {t:"19:05", h:"MU8612 indulás", s:"Bangkok BKK → Sanghaj PVG", d:"dec. 13."},
+        {t:"00:20", h:"Érkezés Sanghajba", s:"Átszállás 2 óra 5 perc, városnézés nincs.", d:"dec. 14."},
+        {t:"02:25", h:"MU8639 indulás", s:"Sanghaj PVG → Budapest BUD", d:"dec. 14."},
+        {t:"07:05", h:"Érkezés Budapestre", s:"Helyi idő.", d:"dec. 14."}
+      ],
+      note:"A dec. 13-i MU8612 19:05-kor indul, ezért 15:05-re kell a reptérre érni. A szállásról ennél korábban indultok, a transzfer idejét Zsolt külön egyezteti. Sanghajban 2 óra 5 perc az átszállás, városnézés nincs."
+    },
+    hosszu: {
+      name:"Hosszú út",
+      tag:"WDBF világbajnokság · Bangkok · dec. 4–18.",
+      lead:"Hosszabb csoport: hazaindulás december 16-án este, a bangkoki járat december 17-én hajnalban indul. A pipák ezen az eszközön maradnak meg, ha bezárod az oldalt.",
+      days:12, dayEnd:"16.",
+      stayFt:94500, stayLabel:"Szállás, dec. 17-ig maradók",
+      insFt:20000, insFull:32500, insUntil:"dec. 18-ig",
+      dayTot:[7200,12000], keret:[10000,16000], cny:[200,400],
+      konz:"a kínai tartózkodást/tranzitot is add meg",
+      home:[
+        {c:"MU548", r:"Bangkok → Sanghaj", t:"dec. 17. 01:55 → 07:10"},
+        {c:"MU8639", r:"Sanghaj → Budapest", t:"dec. 18. 02:25 → 07:05"}
+      ],
+      tlTitle:"Hazaút napja, dec. 16–18.",
+      tl:[
+        {p:1, t:"Még nincs", h:PENDING_HOME.h, s:PENDING_HOME.s, d:"dec. 16."},
+        {t:"21:55", h:"Reptéren kell lenned", s:"4 órás előérkezéssel számolva, útlevéllel. Az éjszakai indulás miatt már dec. 16-án este ki kell menni.", d:"dec. 16."},
+        {t:"01:55", h:"MU548 indulás", s:"Bangkok BKK → Sanghaj PVG", d:"dec. 17."},
+        {t:"07:10", h:"Érkezés Sanghajba", s:"Átszállás 19 óra 15 perc. A tervezett városnézés a beléptetéstől és a járatok pontosságától függ.", d:"dec. 17."},
+        {t:"02:25", h:"MU8639 indulás", s:"Sanghaj PVG → Budapest BUD", d:"dec. 18."},
+        {t:"07:05", h:"Érkezés Budapestre", s:"Helyi idő.", d:"dec. 18."}
+      ],
+      note:"A dec. 17-i MU548 01:55-kor indul, ezért már dec. 16-án este, 21:55-re kell a reptérre érni. A szállásról ennél korábban indultok, a transzfer idejét Zsolt külön egyezteti. Sanghajban 19 óra 15 perc az átszállás, de a csapatvezető által megadott reptéri visszaérkezés kötelező."
+    }
+  };
+
+  function deadlinesFor(m){
+    var c = CFG[m];
+    return [
+      {id:"d-szallas", date:"2026-11-20", label:"nov. 20.", t:"Szállásdíj befizetése: "+fmt(c.stayFt)+" Ft", s:"Utalás Papp Zsoltnak, közlemény: a neved."},
+      {id:"d-biz", date:"2026-11-27", label:"nov. 27.", t:"Biztosítás díja: felnőtt "+fmt(c.insFt)+" Ft", s:"A "+c.insUntil+" szóló csomag ("+fmt(c.insFull)+" Ft), a jóváírás levonása után."},
+      {id:"d-tdac", date:"2026-12-02", label:"dec. 2.", t:"TDAC kitöltése (dec. 2. és dec. 4. között)", s:"Érkezési járat: MU541, érkezési dátum: dec. 5. Mentsd el a visszaigazolást, nyomtasd ki.", l:[["TDAC kitöltése","https://tdac.immigration.go.th/"],["Kitöltési útmutató","https://tdac.immigration.go.th/manual/en/"]]},
+      {id:"d-konzinfo", date:"2026-12-04", label:"indulás előtt", t:"Konzuli regisztráció (Konzinfo)", s:"A tájékoztató nem ad rá külön határidőt. Intézd el indulás előtt, legkésőbb dec. 4-ig. Ország: Thaiföld, "+c.konz+". Az utazás célja: Turizmus. Az utazás típusa: Egyéni.", l:[["Konzinfo Ügysegéd","https://konzinfougyseged.mfa.gov.hu/"]]},
+      {id:"d-nevezes", date:"2026-12-04", label:"dec. 4.", t:"Nevezési díj", s:"Magyarországról indulóknak 0 Ft a jóváírás után. Ellenőrizd Zsoltnál."},
+      {id:"d-gyul", date:"2026-12-04", label:"dec. 4. 07:30", t:"Gyülekező a Liszt Ferenc repülőtéren", s:"Útlevéllel. A járat 11:30-kor indul (MU8640)."}
+    ];
+  }
+  function flightsFor(m){
+    return [
+      {c:"MU8640", r:"Budapest → Sanghaj", t:"dec. 4. 11:30 → dec. 5. 05:25", home:false},
+      {c:"MU541", r:"Sanghaj → Bangkok", t:"dec. 5. 08:35 → 12:20", home:false}
+    ].concat(CFG[m].home.map(function(x){ return {c:x.c, r:x.r, t:x.t, home:true}; }));
+  }
 
   var groups = [
     {id:"iratok", title:"Iratok és kézipoggyász", items:[
@@ -511,6 +643,31 @@ footer{color:var(--muted);font-size:.88rem}
     ]}
   ];
 
+  groups[0].extra = [
+    {id:"iratok-cn", mode:"hosszu", t:"Kínai Arrival Card kitöltése a sanghaji városnézéshez", s:"Ingyenes. Online vagy a helyszínen is kitölthető. Legyen nálad útlevél, továbbutazási igazolás és a csapat elérhetősége.", l:[["Kínai Arrival Card","https://s.nia.gov.cn/ArrivalCardFillingPC/"],["Szabályok","https://en.nia.gov.cn/n147418/n147468/c187308/content.html"],["Vízummentesség, nagykövetségi tájékoztató","https://hu.china-embassy.gov.cn/hu./lsyw/vizum1/202511/t20251105_11747190.htm"]]}
+  ];
+  groups[1].extra = [
+    {id:"ruha-cn", mode:"hosszu", t:"Sanghajra: meleg, szélálló kabát, hosszúnadrág, zárt cipő, sál", s:"Szükség szerint sapka és kesztyű."}
+  ];
+  groups[2].extra = [
+    {id:"egeszseg-ali", mode:"hosszu", t:"Alipay beállítása még itthon", s:"Ellenőrizd a kártyakapcsolást és az azonosítást. Legyen másik fizetési lehetőséged is, mert nem minden kereskedőnél működik minden külföldi kártya."},
+    {id:"egeszseg-cnnet", mode:"hosszu", t:"Kínai mobilnet a sanghaji napra", s:"A thaiföldi csomag nem feltétlenül érvényes Kínában, ellenőrizd a lefedettséget. Kínában több Google- és közösségi szolgáltatás korlátozott lehet, ezért a címeket, jegyeket és találkozópontokat mentsd offline is."},
+    {id:"egeszseg-amap", mode:"hosszu", t:"Kínai navigáció: Amap/Gaode vagy Apple Térképek", s:""}
+  ];
+  var subBy = {
+    "iratok-4": {
+      rovid:"Ország: Thaiföld, a kínai tranzitot is add meg. Az utazás célja: Turizmus. Az utazás típusa: Egyéni.",
+      hosszu:"Ország: Thaiföld, a kínai tartózkodást/tranzitot is add meg. Az utazás célja: Turizmus. Az utazás típusa: Egyéni."
+    },
+    "ruha-0": {
+      rovid:"A javaslat a hosszabb útra szól, helyi mosással. Kilenc napra kevesebb is elég.",
+      hosszu:"A javaslat a hosszabb útra szól, helyi mosással."
+    },
+    "egeszseg-5": {
+      hosszu:"Thaiföldön A, B, C, O típusú aljzat. Kínához A és I típusra is alkalmas adapterrel készülj."
+    }
+  };
+
   var todayMs = new Date(); todayMs.setHours(0,0,0,0);
 
   function daysLeft(iso){
@@ -529,44 +686,52 @@ footer{color:var(--muted);font-size:.88rem}
 
   // Határidők
   var dlBox = document.getElementById("deadlines");
-  deadlines.forEach(function(d){
-    allIds.push(d.id);
-    var row = el("div","dl");
-    var lab = el("label");
-    var cb = el("input"); cb.type = "checkbox"; cb.id = d.id; cb.checked = !!state[d.id];
-    var date = el("span","date", d.label);
-    var what = el("span","what","<b>"+d.t+"</b><span>"+d.s+(d.l ? "<br>"+lk(d.l) : "")+"</span>");
-    var pill = el("span","pill");
-    function paint(){
-      row.classList.toggle("checked", cb.checked);
-      var n = daysLeft(d.date);
-      pill.className = "pill";
-      if(cb.checked){ pill.textContent = "kész"; pill.classList.add("done"); }
-      else if(n < 0){ pill.textContent = Math.abs(n)+" napja lejárt"; pill.classList.add("soon"); }
-      else if(n === 0){ pill.textContent = "ma"; pill.classList.add("soon"); }
-      else if(n === 1){ pill.textContent = "holnap"; pill.classList.add("soon"); }
-      else { pill.textContent = n+" nap"; if(n <= 7) pill.classList.add("soon"); }
-    }
-    cb.addEventListener("change", function(){ state[d.id] = cb.checked; save(); paint(); update(); });
-    paint();
-    // sorrend: pipa, dátum, szöveg
-    var left = el("span"); left.style.display = "none";
-    lab.appendChild(date); lab.appendChild(what);
-    var cbWrap = el("span"); cbWrap.appendChild(cb);
-    row.appendChild(date);
-    var mid = el("label","what"); mid.style.display="flex"; mid.style.gap="10px"; mid.style.cursor="pointer";
-    mid.appendChild(cb); mid.appendChild(what);
-    row.appendChild(mid); row.appendChild(pill);
-    dlBox.appendChild(row);
-  });
+  function renderDeadlines(){
+    dlBox.innerHTML = "";
+    allIds = [];
+    deadlinesFor(MODE).forEach(function(d){
+      allIds.push(d.id);
+      var row = el("div","dl");
+      var cb = el("input"); cb.type = "checkbox"; cb.id = d.id; cb.checked = !!state[d.id];
+      var date = el("span","date", d.label);
+      var what = el("span","what","<b>"+d.t+"</b><span>"+d.s+(d.l ? "<br>"+lk(d.l) : "")+"</span>");
+      var pill = el("span","pill");
+      function paint(){
+        row.classList.toggle("checked", cb.checked);
+        var n = daysLeft(d.date);
+        pill.className = "pill";
+        if(cb.checked){ pill.textContent = "kész"; pill.classList.add("done"); }
+        else if(n < 0){ pill.textContent = Math.abs(n)+" napja lejárt"; pill.classList.add("soon"); }
+        else if(n === 0){ pill.textContent = "ma"; pill.classList.add("soon"); }
+        else if(n === 1){ pill.textContent = "holnap"; pill.classList.add("soon"); }
+        else { pill.textContent = n+" nap"; if(n <= 7) pill.classList.add("soon"); }
+      }
+      cb.addEventListener("change", function(){ state[d.id] = cb.checked; save(); paint(); update(); });
+      paint();
+      row.appendChild(date);
+      var mid = el("label","what"); mid.style.display="flex"; mid.style.gap="10px"; mid.style.cursor="pointer";
+      mid.appendChild(cb); mid.appendChild(what);
+      row.appendChild(mid); row.appendChild(pill);
+      dlBox.appendChild(row);
+    });
+  }
 
-  // Járatok
-  var fl = document.getElementById("flights");
-  flights.forEach(function(f){
-    var d = el("div","leg"+(f.home?" home":""));
-    d.innerHTML = '<span class="code">'+f.c+(f.home?" · hazaút":" · odaút")+'</span><span class="route">'+f.r+'</span><span class="time">'+f.t+'</span><span class="bag">Kézi 1 × 8 kg · feladott 2 × 23 kg</span>';
-    fl.appendChild(d);
-  });
+  // Járatok és hazaút idővonal
+  function renderFlights(){
+    var fl = document.getElementById("flights");
+    fl.innerHTML = "";
+    flightsFor(MODE).forEach(function(f){
+      var d = el("div","leg"+(f.home?" home":""));
+      d.innerHTML = '<span class="code">'+f.c+(f.home?" · hazaút":" · odaút")+'</span><span class="route">'+f.r+'</span><span class="time">'+f.t+'</span><span class="bag">Kézi 1 × 8 kg · feladott 2 × 23 kg</span>';
+      fl.appendChild(d);
+    });
+    var c = CFG[MODE];
+    document.getElementById("tlTitle").textContent = c.tlTitle;
+    document.getElementById("flightNote").textContent = c.note;
+    document.getElementById("tl").innerHTML = c.tl.map(function(x){
+      return '<li'+(x.p ? ' class="pending"' : '')+'><b class="t">'+x.t+'</b><span>'+x.h+'<small>'+x.s+'</small></span><em>'+x.d+'</em></li>';
+    }).join("");
+  }
 
   // Egyéni tételek (külön tárolva)
   var KEY2 = "thaifold2026-custom-v1";
@@ -579,7 +744,13 @@ footer{color:var(--muted);font-size:.88rem}
     var out = [];
     g.items.forEach(function(it, i){
       var id = g.id+"-"+i;
-      if(!cstore.deleted[id]) out.push({id:id, t:it[0], s:it[1], l:it[2], custom:false});
+      if(cstore.deleted[id]) return;
+      var s = it[1], sb = subBy[id];
+      if(sb && sb[MODE] != null) s = sb[MODE];
+      out.push({id:id, t:it[0], s:s, l:it[2], custom:false});
+    });
+    (g.extra || []).forEach(function(x){
+      if(x.mode === MODE && !cstore.deleted[x.id]) out.push({id:x.id, t:x.t, s:x.s, l:x.l, custom:false});
     });
     (cstore.items[g.id] || []).forEach(function(c){ out.push({id:c.id, t:c.t, custom:true}); });
     return out;
@@ -632,13 +803,45 @@ footer{color:var(--muted);font-size:.88rem}
     document.getElementById("restoreDel").hidden = !any;
     if(focusGid){ var f = document.getElementById("add-"+focusGid); if(f) f.focus(); }
   }
-  renderLists();
   document.getElementById("restoreDel").addEventListener("click", function(){ cstore.deleted = {}; csave(); renderLists(); update(); });
 
   function fmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0"); }
-  var RATE = 9.4, LO = 75200, HI = 122200;
-  var SCOPE = {egyszeri:"egyszeri", naponta:"naponta (9 nap)", egesz:"az egész útra"};
-  function customFt(c){ return Math.round(c.amt * (c.cur === "THB" ? RATE : 1) * (c.scope === "naponta" ? 9 : 1)); }
+  var OUT_LO = 0, OUT_HI = 0;
+  function r100(x){ return Math.round(x/100)*100; }
+  function rng(a, b, suf){ return fmt(a)+"–"+fmt(b)+(suf || ""); }
+  function scopeLabel(sc){ return sc === "naponta" ? "naponta ("+CFG[MODE].days+" nap)" : (sc === "egesz" ? "az egész útra" : "egyszeri"); }
+  function customFt(c){ return Math.round(c.amt * (c.cur === "THB" ? RATE : 1) * (c.scope === "naponta" ? CFG[MODE].days : 1)); }
+
+  function renderCostTable(){
+    var c = CFG[MODE], tb = document.getElementById("costBody");
+    var kLo = Math.round(c.keret[0]*RATE), kHi = Math.round(c.keret[1]*RATE);
+    var cLo = 0, cHi = 0;
+    if(c.cny){ cLo = Math.round(c.cny[0]*CNYRATE); cHi = Math.round(c.cny[1]*CNYRATE); }
+    OUT_LO = kLo + cLo; OUT_HI = kHi + cHi;
+    var h = "";
+    h += '<tr class="sec"><th colspan="5">1. Itthon befizetendő (Papp Zsoltnak, forintban)</th></tr>';
+    h += '<tr data-dl="d-szallas" data-ft="'+c.stayFt+'"><td>'+c.stayLabel+'</td><td>az egész útra</td><td>nov. 20.</td><td class="n">'+fmt(c.stayFt)+' Ft</td><td class="n">'+fmt(c.stayFt)+'</td></tr>';
+    h += '<tr data-dl="d-biz" data-ft="'+c.insFt+'"><td>Biztosítás, felnőtt, '+c.insUntil+' ('+fmt(c.insFull)+' Ft, jóváírással)</td><td>az egész útra</td><td>nov. 27.</td><td class="n">'+fmt(c.insFt)+' Ft</td><td class="n">'+fmt(c.insFt)+'</td></tr>';
+    h += '<tr data-dl="d-nevezes" data-ft="0"><td>Nevezés (jóváírással)</td><td>egyszeri</td><td>dec. 4.</td><td class="n">0 Ft</td><td class="n">0</td></tr>';
+    h += '<tr class="sub"><td colspan="4">Itthon még befizetendő összesen</td><td class="n" id="homeSub"></td></tr>';
+    h += '<tr id="allPaid" hidden><td colspan="5">Minden itthoni tétel ki van pipálva, nincs több befizetnivaló.</td></tr>';
+    h += '<tr class="sec"><th colspan="5">2. Helyi költés napi bontásban (dec. 5–'+c.dayEnd+', '+c.days+' nap)</th></tr>';
+    h += '<tr><td>Étkezés és ivóvíz</td><td>naponta</td><td></td><td class="n">400–650 THB</td><td class="n">3 800–6 100</td></tr>';
+    h += '<tr><td>Városi közlekedés</td><td>naponta</td><td></td><td class="n">100–200 THB</td><td class="n">900–1 900</td></tr>';
+    h += '<tr><td>Kisebb kiadások</td><td>naponta</td><td></td><td class="n">100–150 THB</td><td class="n">900–1 400</td></tr>';
+    h += '<tr class="sub"><td colspan="3">Napi összesen</td><td class="n">600–1 000 THB</td><td class="n">5 600–9 400</td></tr>';
+    h += '<tr class="sub"><td colspan="3">Napi költés '+c.days+' napra</td><td class="n">'+rng(c.dayTot[0], c.dayTot[1], " THB")+'</td><td class="n">'+rng(r100(c.dayTot[0]*RATE), r100(c.dayTot[1]*RATE))+'</td></tr>';
+    h += '<tr class="sec"><th colspan="5">3. Javasolt készpénz- és kártyakeret</th></tr>';
+    h += '<tr><td>Napi költés, transzfer, internet és tartalék együtt</td><td>az egész útra</td><td></td><td class="n">'+rng(c.keret[0], c.keret[1], " THB")+'</td><td class="n">'+rng(kLo, kHi)+'</td></tr>';
+    if(c.cny){
+      h += '<tr><td>Sanghaji nap, fizetős látványosságok nélkül</td><td>egyszeri</td><td></td><td class="n">'+rng(c.cny[0], c.cny[1], " CNY")+'</td><td class="n">'+rng(cLo, cHi)+'</td></tr>';
+    }
+    h += '<tr><td>Anyagi fedezet a határon (nem költség, csak be kell mutatni)</td><td>egyszeri</td><td></td><td class="n">20 000 THB</td><td class="n">188 000</td></tr>';
+    tb.innerHTML = h;
+    var opt = document.querySelector('#cScope option[value="naponta"]');
+    if(opt) opt.textContent = "naponta ("+c.days+" nap)";
+  }
+
   function renderCustomCosts(){
     var tb = document.getElementById("customBody");
     tb.innerHTML = "";
@@ -654,9 +857,9 @@ footer{color:var(--muted);font-size:.88rem}
       del.style.marginLeft = "0";
       del.addEventListener("click", function(){ cstore.costs = cstore.costs.filter(function(x){ return x.id !== c.id; }); csave(); renderCustomCosts(); updateCosts(); });
       wrap.appendChild(nm); wrap.appendChild(del); td1.appendChild(wrap); tr.appendChild(td1);
-      tr.appendChild(el("td","", SCOPE[c.scope] || ""));
+      tr.appendChild(el("td","", scopeLabel(c.scope)));
       tr.appendChild(el("td","", ""));
-      tr.appendChild(el("td","n", fmt(c.amt)+" "+(c.cur === "THB" ? "THB" : "Ft")+(c.scope === "naponta" ? " × 9" : "")));
+      tr.appendChild(el("td","n", fmt(c.amt)+" "+(c.cur === "THB" ? "THB" : "Ft")+(c.scope === "naponta" ? " × "+CFG[MODE].days : "")));
       tr.appendChild(el("td","n", fmt(customFt(c))));
       tb.appendChild(tr);
     });
@@ -672,7 +875,10 @@ footer{color:var(--muted);font-size:.88rem}
     document.getElementById("homeSub").textContent = fmt(rem);
     document.getElementById("homeTile").textContent = fmt(rem)+" Ft";
     document.getElementById("homeFoot").textContent = fmt(rem)+" Ft";
-    var tot = fmt(rem+cust+LO)+"–"+fmt(rem+cust+HI)+" Ft";
+    var out = rng(OUT_LO, OUT_HI, " Ft");
+    document.getElementById("outTile").textContent = out;
+    document.getElementById("outFoot").textContent = out;
+    var tot = rng(rem+cust+OUT_LO, rem+cust+OUT_HI, " Ft");
     document.getElementById("totTile").textContent = tot;
     document.getElementById("totFoot").textContent = tot;
     document.getElementById("allPaid").hidden = open > 0;
@@ -681,7 +887,6 @@ footer{color:var(--muted);font-size:.88rem}
     document.getElementById("customTileV").textContent = fmt(cust)+" Ft";
     document.getElementById("customFoot").textContent = fmt(cust)+" Ft";
   }
-  renderCustomCosts();
   document.getElementById("costForm").addEventListener("submit", function(ev){
     ev.preventDefault();
     var n = document.getElementById("cName").value.trim();
@@ -728,7 +933,7 @@ footer{color:var(--muted);font-size:.88rem}
   document.getElementById("copyLeft").addEventListener("click", function(){
     var btn = this;
     var lines = [];
-    deadlines.forEach(function(d){ if(!state[d.id]) lines.push("[ ] "+d.label+" – "+d.t); });
+    deadlinesFor(MODE).forEach(function(d){ if(!state[d.id]) lines.push("[ ] "+d.label+" – "+d.t); });
     groups.forEach(function(g){ itemsOf(g).forEach(function(it){ if(!state[it.id]) lines.push("[ ] "+it.t); }); });
     var text = lines.join("\n");
     function ok(){ btn.textContent = "Kimásolva"; setTimeout(function(){ btn.textContent = "Hiányzók másolása"; }, 1800); }
@@ -787,15 +992,17 @@ footer{color:var(--muted);font-size:.88rem}
   // Dokumentumlista pipák
   var docBoxes = Array.prototype.slice.call(document.querySelectorAll(".docchk"));
   function updateDocs(){
-    var d = 0;
-    docBoxes.forEach(function(b){ var on = !!state[b.id]; b.checked = on; b.closest("tr").classList.toggle("checked", on); if(on) d++; });
-    var c = document.getElementById("docCnt"); if(c) c.textContent = d+" / "+docBoxes.length;
+    var d = 0, n = 0;
+    docBoxes.forEach(function(b){
+      var tr = b.closest("tr"), on = !!state[b.id];
+      b.checked = on; tr.classList.toggle("checked", on);
+      if(!tr.hidden){ n++; if(on) d++; }
+    });
+    var c = document.getElementById("docCnt"); if(c) c.textContent = d+" / "+n;
   }
   docBoxes.forEach(function(b){
     b.addEventListener("change", function(){ state[b.id] = b.checked; save(); updateDocs(); });
   });
-  updateDocs();
-
   // Pontos idő: Bangkok és Budapest
   function tzOffsetMin(tz, d){
     var f = new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
@@ -813,8 +1020,7 @@ footer{color:var(--muted);font-size:.88rem}
       var diff = Math.round((tzOffsetMin("Asia/Bangkok", now) - tzOffsetMin("Europe/Budapest", now)) / 60);
       box.innerHTML =
         '<div class="clock"><span>Budapest</span><b>'+opt("Europe/Budapest")+'</b><small>'+day("Europe/Budapest")+'</small></div>'+
-        '<div class="clock"><span>Bangkok</span><b>'+opt("Asia/Bangkok")+'</b><small>'+day("Asia/Bangkok")+'</small></div>'+
-        '<div class="clock diff"><span>Időeltolódás</span><b>+'+diff+' óra</b><small>Bangkok előrébb jár</small></div>';
+        '<div class="clock"><span>Bangkok</span><b>'+opt("Asia/Bangkok")+'</b><small>'+day("Asia/Bangkok")+'</small></div>';
     } catch(e) { box.hidden = true; }
   }
   tickClocks();
@@ -862,7 +1068,35 @@ footer{color:var(--muted);font-size:.88rem}
   document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "visible") checkForNewVersion(); });
   setInterval(checkForNewVersion, 600000);
 
-  update();
+  // ---- Módváltás ----
+  var modeBtns = Array.prototype.slice.call(document.querySelectorAll("[data-set-mode]"));
+  var modeDefault = document.getElementById("modeDefault");
+  function applyMode(){
+    var c = CFG[MODE];
+    document.getElementById("tagLine").textContent = c.tag;
+    document.getElementById("leadLine").textContent = c.lead;
+    modeBtns.forEach(function(b){ b.setAttribute("aria-checked", b.dataset.setMode === MODE ? "true" : "false"); });
+    modeDefault.checked = mstore.default === MODE;
+    document.getElementById("modeDefaultText").textContent = mstore.default
+      ? (mstore.default === MODE ? "Ez az alapértelmezett út" : "Alapértelmezett: "+CFG[mstore.default].name+". Legyen ez?")
+      : "Legyen ez az alapértelmezett";
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mode]"), function(n){ n.hidden = n.dataset.mode !== MODE; });
+    renderDeadlines();
+    renderFlights();
+    renderLists();
+    renderCostTable();
+    renderCustomCosts();
+    updateDocs();
+    update();
+  }
+  modeBtns.forEach(function(b){
+    b.addEventListener("click", function(){ MODE = b.dataset.setMode; applyMode(); });
+  });
+  modeDefault.addEventListener("change", function(){
+    if(modeDefault.checked){ mstore.default = MODE; } else if(mstore.default === MODE){ mstore.default = null; }
+    msave(); applyMode();
+  });
+  applyMode();
 })();
 </script>
 <script>

@@ -1,5 +1,5 @@
 // Offline gyorsítótár. Ha módosítod az oldalt, a "Frissítés" gomb vagy ez a verziószám gondoskodik az újról.
-const CACHE = "thaifold-2026-v2";
+const CACHE = "thaifold-2026-v3";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
