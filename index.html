@@ -12,7 +12,7 @@
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-<meta name="app-version" content="610cfd9bae">
+<meta name="app-version" content="df40ce69e0">
 <style>
 /* Layout: egy oszlop, bal oldali sávban a haladás; fent állapotösszegzés, alatta határidők, repülők, checklista. */
 :root{
@@ -226,6 +226,7 @@ table.docs tr.checked td:not(.chk){color:var(--muted);text-decoration:line-throu
 .defchk{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.95rem}
 .defchk input{width:20px;height:20px;accent-color:var(--accent)}
 .stack{display:flex;flex-direction:column;gap:14px}
+.apps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 footer{color:var(--muted);font-size:.88rem}
 @media (max-width:520px){
   .dl{grid-template-columns:auto 1fr}
@@ -307,7 +308,7 @@ footer{color:var(--muted);font-size:.88rem}
 <nav class="nav" aria-label="Oldalak" role="tablist">
   <a href="#hatarido" data-tab="hatarido" role="tab">Határidők</a>
   <a href="#utazas" data-tab="utazas" role="tab">Járat és szállás</a>
-  <a href="#koltsegek" data-tab="koltsegek" role="tab">Költségek</a>
+  <a href="#koltsegek" data-tab="koltsegek" role="tab">Költségek, pénz, net</a>
   <a href="#lista" data-tab="lista" role="tab">Lista</a>
   <a href="#kapcsolatok" data-tab="kapcsolatok" role="tab">Fontos kapcsolatok</a>
   <button type="button" id="refreshBtn" class="refresh" title="Új verzió keresése és betöltése. A pipák megmaradnak.">Frissítés</button>
@@ -461,6 +462,36 @@ footer{color:var(--muted);font-size:.88rem}
     </div>
   </form>
   <p class="lead" style="margin:0">Átszámítás kb. 9,4 Ft/THB árfolyammal<span data-mode="hosszu"> és kb. 48 Ft/CNY árfolyammal</span>, a váltási díj miatt a tényleges összeg eltérhet. Az összesítés nem tartalmazza a repülőjegyet (az már ki van fizetve), az esetleges vízumdíjat és a saját programokat. Az utalás adatait Zsolt tájékoztatójában találod.</p>
+</section>
+
+<section class="block" id="sec-money" data-page="koltsegek">
+  <div class="bh"><h2>Pénz, telefon és internet</h2><p class="sub">Ezeket mindenki maga intézi, ezért érdemes időben átnézni.</p></div>
+  <div class="scroll">
+  <table class="route">
+    <thead><tr><th>Téma</th><th>Tudnivaló</th></tr></thead>
+    <tbody>
+      <tr><td>Pénznem</td><td><span data-mode="rovid">Thaiföldön thai bahtot (THB) használnak.</span><span data-mode="hosszu">Thaiföldön thai bahtot (THB), Kínában jüant (CNY) használnak.</span></td></tr>
+      <tr><td>Kártya és készpénz</td><td>Legyen működő Visa/Mastercard kártyád és készpénzed is. A piacokon, kisebb étkezdékben és egyes közlekedési helyzetekben készpénz kellhet. Kis címletekkel készülj, a tartalékot és egy második kártyát külön tárold. Revolut/Wise kártya is használható, de nem helyettesíti a készpénzt.</td></tr>
+      <tr><td>Bank</td><td>Ellenőrizd a bankod külföldi használati és készpénzfelvételi díjait, napi limitjeit. Fizetésnél általában a helyi pénznemben történő terhelést érdemes választani, az automatikus forintosítást pedig elutasítani. A tényleges költség a kártya feltételeitől függ. A banki SMS-fogadás maradjon megoldott.</td></tr>
+      <tr data-mode="hosszu"><td>Alipay (Sanghaj)</td><td>Az Alipay alkalmazást még itthon állítsd be, és ellenőrizd a kártyakapcsolást és az azonosítást. Legyen másik fizetési lehetőséged is, mert nem minden kereskedőnél működik minden külföldi kártya.</td></tr>
+      <tr><td>Mobilinternet</td><td>Mindenki maga intézi. Ellenőrizd, hogy a telefonod eSIM-képes és feloldott-e. Lehet helyi AIS/True SIM vagy eSIM, illetve utazási eSIM (például Airalo, Holafly, Nomad, vagy a Revolut kínálata, ha elérhető). Vásárlás előtt nézd meg az adatkeretet, az érvényességet, az aktiválási szabályt és a hotspot lehetőségét. Helyi SIM regisztrációjához útlevél kellhet.<div class="links" style="margin-top:8px"><a href="https://www.ais.th/en/consumers/package/international/tourist-plan" target="_blank" rel="noopener noreferrer">AIS turista SIM/eSIM</a></div></td></tr>
+      <tr><td>Magyar SIM</td><td>Kapcsold ki az adatroamingot és az automatikus mobiladat-váltást. Az utazási eSIM-et a szolgáltató utasítása szerint állítsd be.</td></tr>
+      <tr data-mode="hosszu"><td>Kína, mobilnet</td><td>A thaiföldi csomag nem feltétlenül érvényes Kínában, ezért a sanghaji napra külön ellenőrizd a lefedettséget. Kínában helyi hálózatról több Google- és közösségi szolgáltatás korlátozott lehet. A címeket, jegyeket, találkozópontokat és fontos üzeneteket mentsd offline is, ne csak egyetlen alkalmazásra támaszkodj.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <h3>Hasznos alkalmazások</h3>
+  <ul class="apps">
+    <li><b>Grab</b>: fuvarrendelés Bangkokban.</li>
+    <li><b>Google Maps</b>: thaiföldi tájékozódás.</li>
+    <li><b>Maps.me</b>: offline térkép, a megfelelő régiókat még itthon töltsd le.</li>
+    <li><b>Google Translate vagy Microsoft Translator</b>: fordítás, előre letöltött nyelvi csomagokkal, ahol támogatott.</li>
+    <li><b>Konzinfo Utazom</b>: konzuli információk.</li>
+    <li><b>Banki alkalmazás</b> és a csapat kommunikációs csoportja bekapcsolt értesítésekkel.</li>
+    <li><b>LINE</b>: csak akkor, ha helyi kapcsolattartáshoz használjuk.</li>
+    <li data-mode="hosszu"><b>Alipay</b>: kínai fizetés.</li>
+    <li data-mode="hosszu"><b>Amap/Gaode vagy Apple Térképek</b>: kínai navigáció.</li>
+  </ul>
 </section>
 
 <section class="block" id="lists" data-page="lista">
@@ -951,7 +982,7 @@ footer{color:var(--muted);font-size:.88rem}
   }); }
 
   var PAGES = [
-    ["hatarido","Határidők"],["utazas","Járat és szállás"],["koltsegek","Költségek"],["lista","Lista"],["kapcsolatok","Fontos kapcsolatok"]
+    ["hatarido","Határidők"],["utazas","Járat és szállás"],["koltsegek","Költségek, pénz, net"],["lista","Lista"],["kapcsolatok","Fontos kapcsolatok"]
   ];
   var tabs = Array.prototype.slice.call(document.querySelectorAll(".nav a"));
   var pager = document.getElementById("pager");
