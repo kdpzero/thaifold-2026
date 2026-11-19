@@ -12,6 +12,7 @@
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
+<meta name="app-version" content="6a1eb3a8c7">
 <style>
 /* Layout: egy oszlop, bal oldali sávban a haladás; fent állapotösszegzés, alatta határidők, repülők, checklista. */
 :root{
@@ -213,6 +214,7 @@ table.docs tr.checked td:not(.chk){color:var(--muted);text-decoration:line-throu
 @media (max-width:520px){.tl li{grid-template-columns:70px 1fr}.tl em{grid-column:2}}
 .nav .refresh{margin-left:auto;flex:none;border-radius:8px;padding:8px 14px;font-weight:600;white-space:nowrap}
 .nav .refresh:disabled{opacity:.7;cursor:default}
+.nav .refresh.has-new{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 footer{color:var(--muted);font-size:.88rem}
 @media (max-width:520px){
   .dl{grid-template-columns:auto 1fr}
@@ -842,6 +844,23 @@ footer{color:var(--muted);font-size:.88rem}
       });
     });
   }
+
+  // Új verzió jelzése (csak a telepített, offline gyorsítótáras változatban)
+  function checkForNewVersion(){
+    if(!rb || !/^https?:$/.test(location.protocol) || !navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+    var m = document.querySelector('meta[name="app-version"]');
+    var mine = m ? m.getAttribute("content") : null;
+    if(!mine) return;
+    fetch(location.pathname, {cache:"no-store"}).then(function(r){ return r.ok ? r.text() : ""; }).then(function(t){
+      var x = /name="app-version"\s+content="([^"]+)"/.exec(t);
+      if(x && x[1] && x[1] !== mine && !rb.disabled){
+        rb.textContent = "Új verzió, frissítés"; rbText = rb.textContent; rb.classList.add("has-new");
+      }
+    }).catch(function(){});
+  }
+  setTimeout(checkForNewVersion, 3000);
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "visible") checkForNewVersion(); });
+  setInterval(checkForNewVersion, 600000);
 
   update();
 })();
