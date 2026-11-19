@@ -1,0 +1,15 @@
+{
+  "name": "Thaiföld 2026 útinapló",
+  "short_name": "Thaiföld 2026",
+  "description": "WDBF világbajnokság, Bangkok. Határidők, járatok, szállás, költségek és csomagolási lista.",
+  "lang": "hu",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#0b6b5c",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

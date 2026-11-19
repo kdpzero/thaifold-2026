@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thaiföld 2026 útinapló</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6b5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Thaiföld 2026">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<style>
+/* Layout: egy oszlop, bal oldali sávban a haladás; fent állapotösszegzés, alatta határidők, repülők, checklista. */
+:root{
+  --bg:#f4f1ea;
+  --surface:#fffdf8;
+  --ink:#1c2321;
+  --muted:#5d6763;
+  --line:#ddd7c8;
+  --accent:#0b6b5c;
+  --accent-ink:#ffffff;
+  --warn:#b4491f;
+  --ok:#2f7d4f;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121816;--surface:#1a2220;--ink:#eae7de;--muted:#9aa5a0;--line:#2c3733;
+    --accent:#4cc3ad;--accent-ink:#0b1412;--warn:#f08a5d;--ok:#6cc58a;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121816;--surface:#1a2220;--ink:#eae7de;--muted:#9aa5a0;--line:#2c3733;
+  --accent:#4cc3ad;--accent-ink:#0b1412;--warn:#f08a5d;--ok:#6cc58a;color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:880px;margin:0 auto;padding:28px 16px 80px;display:flex;flex-direction:column;gap:32px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.05rem;font-weight:600}
+.lead{color:var(--muted);max-width:62ch;margin:10px 0 0}
+.tag{font:500 .78rem var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
+header{display:flex;flex-direction:column;gap:6px;padding-bottom:20px;border-bottom:2px solid var(--ink)}
+
+/* Haladás */
+.progress{display:grid;grid-template-columns:auto 1fr;gap:6px 20px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.progress .big{font:800 2.4rem/1 var(--display);font-variant-numeric:tabular-nums}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+.progress small{grid-column:1/-1;color:var(--muted)}
+.tools{display:flex;flex-wrap:wrap;gap:8px}
+button,.chip{font:500 .9rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* Határidők */
+.deadlines{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.dl{display:grid;grid-template-columns:96px 1fr auto;gap:8px 14px;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+.dl:first-child{border-top:0}
+.dl .date{font:500 .95rem var(--mono)}
+.dl .what b{font-weight:600}
+.dl .what span{display:block;color:var(--muted);font-size:.9rem}
+.pill{font:500 .78rem var(--mono);padding:3px 9px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
+.pill.soon{color:var(--warn);border-color:var(--warn)}
+.pill.done{color:var(--ok);border-color:var(--ok)}
+.dl.checked .what b{text-decoration:line-through;color:var(--muted)}
+.dl label{display:contents;cursor:pointer}
+
+/* Repülők */
+.flights{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.leg{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.leg .code{font:500 .85rem var(--mono);color:var(--muted)}
+.leg .route{font:600 1.05rem var(--display)}
+.leg .time{font-variant-numeric:tabular-nums}
+.leg.home{border-left:4px solid var(--accent)}
+.note{background:var(--surface);border-left:4px solid var(--warn);padding:12px 16px;border-radius:0 8px 8px 0}
+
+/* Költség */
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:10px 14px;border-top:1px solid var(--line)}
+thead th{border-top:0;font:500 .78rem var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+td.n,th.n{text-align:right}
+tfoot td{font-weight:600}
+.scroll{overflow-x:auto}
+
+/* Checklista */
+.group{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.group>header{display:flex;flex-direction:row;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 16px;border:0;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.group .count{font:500 .85rem var(--mono);color:var(--muted)}
+.item{display:flex;gap:12px;align-items:flex-start;padding:10px 16px;border-top:1px solid var(--line);cursor:pointer}
+.item:first-of-type{border-top:0}
+.item input,.dl input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent);flex:none}
+.item span small{display:block;color:var(--muted);font-size:.88rem}
+.item.checked span:first-of-type{color:var(--muted);text-decoration:line-through}
+.hide-done .item.checked{display:none}
+.skip{display:flex;flex-direction:column;gap:6px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+summary{cursor:pointer;font-weight:600}
+details ul{margin:10px 0 0;padding-left:20px;color:var(--muted)}
+.contacts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.contacts div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.contacts b{display:block;font:500 .78rem var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.contacts span{font-variant-numeric:tabular-nums}
+
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.sum div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.sum span{font:500 .78rem var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.sum b{font:800 1.35rem/1.15 var(--display);font-variant-numeric:tabular-nums}
+.sum .total{background:var(--accent);border-color:var(--accent)}
+.sum .total span,.sum .total b{color:var(--accent-ink)}
+table.costs{min-width:660px}
+table.costs td.n,table.costs th.n{white-space:nowrap}
+table.costs td:nth-child(2){white-space:nowrap}
+table.costs tfoot td{border-top:1px solid var(--line);background:var(--surface);font-weight:500}
+table.costs tfoot tr.ftot td{background:var(--accent);color:var(--accent-ink);border-top:0;font:800 1.25rem/1.2 var(--display);padding:14px 12px}
+table.costs tfoot tr.ftot td.n{font-variant-numeric:tabular-nums}
+table.costs th,table.costs td{padding:9px 12px}
+table.costs tr.sec th{background:color-mix(in srgb,var(--accent) 9%,var(--surface));font:600 .95rem var(--display);text-transform:none;letter-spacing:0;color:var(--ink)}
+table.costs tr.sub td{font-weight:600;background:color-mix(in srgb,var(--ink) 4%,var(--surface))}
+
+.wrap{gap:36px}
+.block{display:flex;flex-direction:column;gap:14px;border-top:2px solid var(--ink);padding-top:18px;scroll-margin-top:64px}
+.bh{display:flex;flex-direction:column;gap:4px}
+.bh h2{display:flex;align-items:baseline;gap:12px}
+.no{font:500 .95rem var(--mono);color:var(--accent);min-width:1.2em}
+.sub{margin:0;color:var(--muted);font-size:.95rem}
+.nav{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;background:var(--bg);padding:10px 0;margin:-8px 0 -8px;border-bottom:1px solid var(--line)}
+.nav a{flex:none;font:500 .88rem var(--body);color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px}
+.nav a:hover{border-color:var(--accent)}
+.nav a.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+.item small a,.what a,.links a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.item small a{font-weight:500}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{text-decoration:none;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;color:var(--ink)}
+.links a:hover{border-color:var(--accent);color:var(--accent)}
+
+.stay{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.stay .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.stay .card.wide{grid-column:1/-1;border-left:4px solid var(--accent)}
+.stay .card b{font:800 1.2rem/1.2 var(--display)}
+.stay .k{font:500 .78rem var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.stay .muted{color:var(--muted);font-size:.92rem}
+.stay .links{margin-top:4px}
+.stay .links button{border-radius:8px}
+table.route td:first-child{white-space:nowrap;font-weight:600;vertical-align:top}
+table.route{min-width:560px}
+table.bagt td small{color:var(--muted);font-weight:400}
+table.bagt td{vertical-align:top}
+
+a.tel{color:var(--accent);font-weight:500;text-underline-offset:2px;white-space:nowrap}
+.contacts a.tel{padding:2px 0}
+
+[hidden]{display:none!important}
+.nav{gap:4px;padding:8px 0;border-bottom:2px solid var(--ink)}
+.nav a{border-radius:8px 8px 0 0;border-bottom:0;padding:9px 14px;font-weight:600}
+.nav a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.block.first{border-top:0;padding-top:4px}
+.pager{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pager a{font:600 .95rem var(--body);color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 16px}
+.pager a:hover{border-color:var(--accent);color:var(--accent)}
+.pager .next{margin-left:auto}
+
+/* kiemelt címszavak */
+.bh h2{font-size:clamp(1.8rem,5vw,2.4rem);font-weight:800;letter-spacing:-.02em;padding:2px 0 2px 14px;border-left:8px solid var(--accent)}
+.bh .sub{padding-left:22px;font-size:1rem}
+.block h3{font-size:1.3rem;font-weight:800;letter-spacing:-.01em;display:inline-block;align-self:flex-start;border-bottom:4px solid var(--accent);padding-bottom:3px;margin-top:6px}
+.group>header h3{display:block;border-bottom:0;padding:0;margin:0;font-size:1.2rem;align-self:auto}
+.group>header{border-left:6px solid var(--accent)}
+table.costs tr.sec th{font-size:1.05rem;font-weight:800;border-left:6px solid var(--accent)}
+.stay .card b{font-size:1.3rem}
+/* egyéni tételek */
+.del{margin-left:auto;flex:none;border:0;background:transparent;color:var(--muted);font:500 1.25rem/1 var(--body);padding:2px 9px;border-radius:6px;cursor:pointer}
+.del:hover{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+.item .grow{flex:1}
+.addform{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;border-top:1px dashed var(--line);align-items:center}
+.addform input[type=text],.addform input[type=number],.addform select{font:400 .95rem var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.addform input[type=text]{flex:1 1 200px}
+.addform input[type=number]{width:120px}
+.addform button{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.costform{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.costform .addform{border-top:0}
+.costform h3{margin:14px 16px 0}
+.bag{display:block;color:var(--muted);font-size:.88rem;margin-top:4px}
+.empty td{color:var(--muted);font-style:italic}
+.clocks{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.clock{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:150px}
+.clock span{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.clock b{font:800 1.5rem/1.1 var(--display);font-variant-numeric:tabular-nums}
+.clock small{color:var(--muted);font-size:.8rem}
+.clock.diff{justify-content:center;border-style:dashed}
+.docs{margin:0}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.tl li{display:grid;grid-template-columns:86px 1fr auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.tl li:first-child{border-top:0}
+.tl .t{font:800 1.3rem/1.1 var(--display);font-variant-numeric:tabular-nums}
+.tl span small{display:block;color:var(--muted);font-size:.9rem;margin-top:2px}
+.tl em{font:500 .85rem var(--mono);color:var(--muted);font-style:normal;white-space:nowrap}
+.tl li.pending{background:color-mix(in srgb,var(--warn) 8%,var(--surface))}
+.tl li.pending .t{font-size:.95rem;color:var(--warn)}
+table.docs td.chk{width:44px;text-align:center}
+table.docs input{width:20px;height:20px;accent-color:var(--accent)}
+table.docs tr.checked td:not(.chk){color:var(--muted);text-decoration:line-through}
+@media (max-width:520px){.tl li{grid-template-columns:70px 1fr}.tl em{grid-column:2}}
+.nav .refresh{margin-left:auto;flex:none;border-radius:8px;padding:8px 14px;font-weight:600;white-space:nowrap}
+.nav .refresh:disabled{opacity:.7;cursor:default}
+footer{color:var(--muted);font-size:.88rem}
+@media (max-width:520px){
+  .dl{grid-template-columns:auto 1fr}
+  .dl .pill{grid-column:2;justify-self:start}
+  .dl .date{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="tag">WDBF világbajnokság · Bangkok · dec. 4–14.</span>
+  <h1>Thaiföld 2026 útinapló</h1>
+  <p class="lead">Rövidebb csoport: hazaindulás december 13-án este. A pipák ezen az eszközön maradnak meg, ha bezárod az oldalt.</p>
+  <div class="clocks" id="clocks" aria-label="Pontos idő"></div>
+</header>
+
+<nav class="nav" aria-label="Oldalak" role="tablist">
+  <a href="#hatarido" data-tab="hatarido" role="tab">Határidők</a>
+  <a href="#utazas" data-tab="utazas" role="tab">Járat és szállás</a>
+  <a href="#koltsegek" data-tab="koltsegek" role="tab">Költségek</a>
+  <a href="#lista" data-tab="lista" role="tab">Lista</a>
+  <a href="#kapcsolatok" data-tab="kapcsolatok" role="tab">Fontos kapcsolatok</a>
+  <button type="button" id="refreshBtn" class="refresh" title="Új verzió keresése és betöltése. A pipák megmaradnak.">Frissítés</button>
+</nav>
+
+<section class="progress" aria-label="Haladás" id="sec-progress">
+  <div class="big" id="pct">0%</div>
+  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="barwrap"><i id="bar"></i></div>
+  <small id="pctText"></small>
+</section>
+
+<div class="tools" id="toolsBar" data-tools="lista">
+  <button id="hideDone" aria-pressed="false" type="button">Csak a hiányzók</button>
+  <button id="copyLeft" type="button">Hiányzók másolása</button>
+  <button id="reset" type="button">Összes pipa törlése</button>
+  <button id="restoreDel" type="button" hidden>Törölt tételek visszaállítása</button>
+</div>
+
+<section class="block" id="sec-deadlines" data-page="hatarido">
+  <div class="bh"><h2>Határidők</h2><p class="sub">Időrendben, a legközelebbi felül. Pipáld ki, ha elintézted.</p></div>
+  <div class="deadlines" id="deadlines"></div>
+</section>
+
+<section class="block" id="sec-flights" data-page="utazas">
+  <div class="bh"><h2>Repülőjáratok</h2><p class="sub">Helyi idő. Az odaút mindenkinek közös, a hazaút a te csoportodé.</p></div>
+  <div class="flights" id="flights"></div>
+  <h3>Hazaút napja, dec. 13–14.</h3>
+  <ol class="tl">
+    <li class="pending"><b class="t">Még nincs</b><span>Indulás a szállásról, kijelentkezés és csomagtárolás<small>A pontos időt és a transzfert Zsolt külön egyezteti. Ennél korábban kell elindulni, mint a reptéri célidő.</small></span><em>dec. 13.</em></li>
+    <li><b class="t">15:05</b><span>Reptéren kell lenned<small>4 órás előérkezéssel számolva, útlevéllel.</small></span><em>dec. 13.</em></li>
+    <li><b class="t">19:05</b><span>MU8612 indulás<small>Bangkok BKK → Sanghaj PVG</small></span><em>dec. 13.</em></li>
+    <li><b class="t">00:20</b><span>Érkezés Sanghajba<small>Átszállás 2 óra 5 perc, városnézés nincs.</small></span><em>dec. 14.</em></li>
+    <li><b class="t">02:25</b><span>MU8639 indulás<small>Sanghaj PVG → Budapest BUD</small></span><em>dec. 14.</em></li>
+    <li><b class="t">07:05</b><span>Érkezés Budapestre<small>Helyi idő.</small></span><em>dec. 14.</em></li>
+  </ol>
+  <h3>Poggyász sztenderd jeggyel</h3>
+  <div class="scroll">
+  <table class="route bagt">
+    <thead><tr><th>Típus</th><th>Darab</th><th>Súly</th><th>Méret</th></tr></thead>
+    <tbody>
+      <tr><td>Kézipoggyász</td><td>1 db / fő</td><td>max. 8 kg</td><td>max. 55 × 40 × 20 cm</td></tr>
+      <tr><td>Személyes táska<br><small>az előtted lévő ülés alá fér</small></td><td>1 db / fő, a kézi mellett</td><td>a tájékoztató nem adja meg</td><td>kb. 35 × 32 × 18 cm (tájékoztató méret)</td></tr>
+      <tr><td>Feladott poggyász</td><td>2 db / fő</td><td>max. 23 kg / db</td><td>a három méret összege max. 158 cm / db</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <h3>Egyéb szabályok</h3>
+  <div class="scroll">
+  <table class="route bagt">
+    <thead><tr><th>Téma</th><th>Szabály</th></tr></thead>
+    <tbody>
+      <tr><td>Folyadék a kézibe</td><td>Legfeljebb 100 ml-es tartályok, egy átlátszó, legfeljebb 1 literes, visszazárható tasakban. A tartály mérete számít, nem a benne maradt mennyiség.</td></tr>
+      <tr><td>Powerbank</td><td>Legfeljebb 2 db, egyenként legfeljebb 100 Wh, CE és CCC jelöléssel. Csak kézipoggyászban, repülés közben nem tölthető, és nem tölthetsz róla másik eszközt.</td></tr>
+      <tr><td>Kézibe tedd</td><td>Egy teljes meccsfelszerelést, egy váltás ruhát, az iratokat és az értékeket.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="lead" style="margin:0">A szabályok a tájékoztatóban megadott China Eastern előírásokat követik. A MU8640, MU8639 és MU8612 járatot a foglalás szerint Shanghai Airlines üzemelteti, ezért indulás előtt az e-jegy és a légitársaság értesítése az irányadó. Ha a jegyed nem sztenderd tarifa, ott ellenőrizd a kereteket.
+  <br><a href="https://global.ceair.com/global/en_static/Announcement/BaggageService/CarryonBaggage/" target="_blank" rel="noopener noreferrer">China Eastern kézipoggyász</a> · <a href="https://global.ceair.com/global/en_USD/Announcement/BaggageService/FreeBaggageAllowanceandSpecifications/" target="_blank" rel="noopener noreferrer">Feladott poggyász</a></p>
+  <p class="note">A dec. 13-i MU8612 19:05-kor indul, ezért 15:05-re kell a reptérre érni. A szállásról ennél korábban indultok, a transzfer idejét Zsolt külön egyezteti. Sanghajban 2 óra 5 perc az átszállás, városnézés nincs.</p>
+</section>
+
+<section class="block" id="sec-stay" data-page="utazas">
+  <div class="bh"><h2>Szállás és helyszín</h2><p class="sub">Harmony Living Condominium, Bangkok. Navigációhoz a teljes nevet és a Sukhumvit Soi 15 címet használd.</p></div>
+  <div class="stay">
+    <div class="card wide">
+      <span class="k">Cím</span>
+      <b>Harmony Living Condominium</b>
+      <span>77 Sukhumvit Soi 15, 10110 Makkaszan, Thaiföld</span>
+      <div class="links"><a href="https://www.google.com/maps/search/?api=1&amp;query=Harmony+Living+Condominium+77+Sukhumvit+Soi+15+Bangkok" target="_blank" rel="noopener noreferrer">Megnyitás térképen</a><button type="button" id="copyAddr">Cím másolása</button></div>
+    </div>
+    <div class="card">
+      <span class="k">Elhelyezés</span>
+      <span>6 fős apartmanok, 3 fős szobákkal. Az étkezés önellátó.</span>
+      <span class="muted">Még nem végleges: szobabeosztás, kulcsátvétel, ki- és bejelentkezés időpontja, csomagtárolás a késői reptéri indulás előtt. Zsolt külön értesít.</span>
+    </div>
+    <div class="card">
+      <span class="k">Konyha és étkező</span>
+      <span>Hűtőszekrény, mikrohullámú sütő, főzőlap, kenyérpirító, vízforraló, konyhai eszközök, étkezőasztal.</span>
+    </div>
+    <div class="card">
+      <span class="k">Fürdő és mosás</span>
+      <span>Saját fürdőszoba, zuhany, vécé, törölköző, ingyenes piperecikkek, hajszárító, mosó- és szárítógép, vasalási lehetőség.</span>
+    </div>
+    <div class="card">
+      <span class="k">Komfort</span>
+      <span>Légkondicionáló, ventilátor, szúnyogháló, ágynemű, kanapé és ülősarok, ruhásszekrény, erkély, városi kilátás, kültéri bútorok.</span>
+    </div>
+    <div class="card">
+      <span class="k">Kapcsolat és egyéb</span>
+      <span>Wi-Fi, tévé kábel- és műholdas csatornákkal, szén-monoxid-érzékelő, kézfertőtlenítő.</span>
+    </div>
+  </div>
+
+  <h3>Eljutás</h3>
+  <div class="scroll">
+  <table class="route">
+    <thead><tr><th>Útvonal</th><th>Hogyan</th></tr></thead>
+    <tbody>
+      <tr><td>Reptér → szállás</td><td>Airport Rail Link Suvarnabhumi → Makkasan, onnan rövid taxi vagy Grab. Vagy előre egyeztetett közös transzfer, sok bőröndnél ez praktikusabb. A díj és a jármű még nincs véglegesítve.</td></tr>
+      <tr><td>Szállás → Union Hall</td><td>BTS Asok vagy Nana állomásra, onnan Sukhumvit-vonal a Ha Yaek Lat Phrao állomásig. Alternatíva: MRT Sukhumvit → Phahon Yothin. Gyaloglással és várakozással számolj 45–60 perccel.</td></tr>
+      <tr><td>Verseny helyszíne</td><td>Union Hall, Union Mall, 54 Soi Lat Phrao 1, Chom Phon, Chatuchak, Bangkok 10900. BTS Ha Yaek Lat Phrao, 2-es kijárat, vagy MRT Phahon Yothin, 5-ös kijárat.<div class="links" style="margin-top:8px"><a href="https://www.google.com/maps/search/?api=1&amp;query=Union+Hall+Union+Mall+54+Soi+Lat+Phrao+1+Chom+Phon+Chatuchak+Bangkok+10900" target="_blank" rel="noopener noreferrer">Megnyitás térképen</a><a href="https://unionhallthailand.com/attend-an-event/" target="_blank" rel="noopener noreferrer">Union Hall, megközelítés</a></div></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note">Mentsd el offline a szállás címét, a találkozópontokat és Zsolt telefonszámát (<a class="tel" href="tel:+36304640085">+36 30 464 0085</a>).</p>
+</section>
+
+<section class="block" id="sec-costs" data-page="koltsegek">
+  <div class="bh"><h2>Költségek</h2><p class="sub">Először az összesítés, alatta tételesen. Forintban és bahtban.</p></div>
+  <div class="sum">
+    <div><span>Itthon még befizetendő</span><b id="homeTile">88 900 Ft</b></div>
+    <div><span>Kint költésre, javasolt keret</span><b>75 200–122 200 Ft</b></div>
+    <div id="customTile" hidden><span>Saját tételek</span><b id="customTileV">0 Ft</b></div>
+    <div class="total"><span>Összesen</span><b id="totTile">164 100–211 100 Ft</b></div>
+  </div>
+  <div class="scroll">
+  <table class="costs">
+    <thead><tr><th>Tétel</th><th>Vonatkozik</th><th>Határidő</th><th class="n">Eredeti összeg</th><th class="n">Kb. Ft</th></tr></thead>
+    <tbody>
+      <tr class="sec"><th colspan="5">1. Itthon befizetendő (Papp Zsoltnak, forintban)</th></tr>
+      <tr data-dl="d-szallas" data-ft="77500"><td>Szállás, dec. 13-ig maradók</td><td>az egész útra</td><td>nov. 20.</td><td class="n">77 500 Ft</td><td class="n">77 500</td></tr>
+      <tr data-dl="d-biz" data-ft="11400"><td>Biztosítás, felnőtt, dec. 14-ig (32 500 Ft, jóváírással)</td><td>az egész útra</td><td>nov. 27.</td><td class="n">11 400 Ft</td><td class="n">11 400</td></tr>
+      <tr data-dl="d-nevezes" data-ft="0"><td>Nevezés (jóváírással)</td><td>egyszeri</td><td>dec. 4.</td><td class="n">0 Ft</td><td class="n">0</td></tr>
+      <tr class="sub"><td colspan="4">Itthon még befizetendő összesen</td><td class="n" id="homeSub">88 900</td></tr>
+      <tr id="allPaid" hidden><td colspan="5">Minden itthoni tétel ki van pipálva, nincs több befizetnivaló.</td></tr>
+
+      <tr class="sec"><th colspan="5">2. Helyi költés napi bontásban (dec. 5–13., 9 nap)</th></tr>
+      <tr><td>Étkezés és ivóvíz</td><td>naponta</td><td></td><td class="n">400–650 THB</td><td class="n">3 800–6 100</td></tr>
+      <tr><td>Városi közlekedés</td><td>naponta</td><td></td><td class="n">100–200 THB</td><td class="n">900–1 900</td></tr>
+      <tr><td>Kisebb kiadások</td><td>naponta</td><td></td><td class="n">100–150 THB</td><td class="n">900–1 400</td></tr>
+      <tr class="sub"><td colspan="3">Napi összesen</td><td class="n">600–1 000 THB</td><td class="n">5 600–9 400</td></tr>
+      <tr class="sub"><td colspan="3">Napi költés kilenc napra</td><td class="n">5 400–9 000 THB</td><td class="n">50 800–84 600</td></tr>
+
+      <tr class="sec"><th colspan="5">3. Javasolt készpénz- és kártyakeret</th></tr>
+      <tr><td>Napi költés, transzfer, internet és tartalék együtt</td><td>az egész útra</td><td></td><td class="n">8 000–13 000 THB</td><td class="n">75 200–122 200</td></tr>
+      <tr><td>Anyagi fedezet a határon (nem költség, csak be kell mutatni)</td><td>egyszeri</td><td></td><td class="n">20 000 THB</td><td class="n">188 000</td></tr>
+    </tbody>
+    <tbody id="customBody"></tbody>
+    <tfoot>
+      <tr class="f1"><td colspan="4">Itthon még befizetendő (1. blokk)</td><td class="n" id="homeFoot">88 900 Ft</td></tr>
+      <tr class="f1"><td colspan="4">Kint javasolt keret (3. blokk, első sor)</td><td class="n">75 200–122 200 Ft</td></tr>
+      <tr class="f1" id="customFootRow" hidden><td colspan="4">Saját tételek</td><td class="n" id="customFoot">0 Ft</td></tr>
+      <tr class="ftot"><td colspan="4">Összesen</td><td class="n" id="totFoot">164 100–211 100 Ft</td></tr>
+    </tfoot>
+  </table>
+  </div>
+  <form class="costform" id="costForm" autocomplete="off">
+    <h3>Saját tétel hozzáadása</h3>
+    <div class="addform">
+      <input type="text" id="cName" placeholder="Pl. ajándék, taxi, masszázs" aria-label="Tétel neve" required maxlength="80">
+      <input type="number" id="cAmt" placeholder="Összeg" aria-label="Összeg" min="0" step="any" required>
+      <select id="cCur" aria-label="Pénznem"><option value="HUF">Ft</option><option value="THB">THB</option></select>
+      <select id="cScope" aria-label="Vonatkozik"><option value="egyszeri">egyszeri</option><option value="naponta">naponta (9 nap)</option><option value="egesz">az egész útra</option></select>
+      <button type="submit">Hozzáadás</button>
+    </div>
+  </form>
+  <p class="lead" style="margin:0">Átszámítás kb. 9,4 Ft/THB árfolyammal, a váltási díj miatt a tényleges összeg eltérhet. Az összesítés nem tartalmazza a repülőjegyet (az már ki van fizetve), az esetleges vízumdíjat és a saját programokat. Az utalás adatait Zsolt tájékoztatójában találod.</p>
+</section>
+
+<section class="block" id="lists" data-page="lista">
+  <div class="bh"><h2>Csomagolási lista</h2><p class="sub">Négy csoport, mindegyik fejlécében látod, mennyi van kipipálva.</p></div>
+  <div class="scroll">
+  <table class="route docs">
+    <caption style="text-align:left;font:800 1.3rem var(--display);padding:4px 0 8px">Dokumentumok egy helyen <span id="docCnt" style="font:500 .9rem var(--mono);color:var(--muted)">0 / 9</span></caption>
+    <thead><tr><th style="width:44px"></th><th>Dokumentum</th><th>Hogyan legyen nálad</th></tr></thead>
+    <tbody>
+      <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-0" aria-label="Útlevél"></td><td>Útlevél</td><td>Nálad, letétként ne hagyd sehol.</td></tr>
+      <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-1" aria-label="Útlevélmásolat"></td><td>Útlevélmásolat</td><td>Offline is elérhető.</td></tr>
+      <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-2" aria-label="Vízum, ha kell"></td><td>Vízum, ha kell</td><td>Kinyomtatva.</td></tr>
+      <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-3" aria-label="TDAC-visszaigazolás"></td><td>TDAC-visszaigazolás</td><td>Offline mentve és kinyomtatva.</td></tr>
+      <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-4" aria-label="Repülőjegy"></td><td>Repülőjegy</td><td>Offline is elérhető.</td></tr>
+      <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-5" aria-label="Szállásfoglalás"></td><td>Szállásfoglalás</td><td>Offline is elérhető.</td></tr>
+      <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-6" aria-label="Szervezői meghívó"></td><td>Szervezői meghívó</td><td>Offline is elérhető.</td></tr>
+      <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-7" aria-label="Biztosítás"></td><td>Biztosítás</td><td>Offline is elérhető.</td></tr>
+      <tr><td class="chk"><input type="checkbox" class="docchk" id="doc-8" aria-label="Fontos telefonszámok"></td><td>Fontos telefonszámok</td><td>Offline is elérhető.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="block" id="sec-contacts" data-page="kapcsolatok">
+  <div class="bh"><h2>Fontos számok</h2><p class="sub">Mentsd el offline is.</p></div>
+  <div class="contacts">
+    <div><b>Csapatkapcsolat</b><span>Zsolt: <a class="tel" href="tel:+36304640085">+36 30 464 0085</a></span></div>
+    <div><b>Thaiföld</b><span>Rendőrség <a class="tel" href="tel:191">191</a> · Mentők <a class="tel" href="tel:1669">1669</a> · Turistarendőrség <a class="tel" href="tel:1155">1155</a></span></div>
+    <div><b>Magyar nagykövetség, Bangkok</b><span><a class="tel" href="tel:+6621189600">+66 2 118 9600</a><br><a class="tel" href="mailto:consulate.bgk@mfa.gov.hu">consulate.bgk@mfa.gov.hu</a></span></div>
+    <div><b>Sürgős konzuli segítség</b><span><a class="tel" href="tel:+3680368036">+36 80 368 036</a></span></div>
+  </div>
+  <h3>Hasznos linkek</h3>
+  <div class="links">
+    <a href="https://worlddodgeballfederation.com/bangkok-2026/" target="_blank" rel="noopener noreferrer">Hivatalos versenyoldal</a>
+    <a href="https://unionhallthailand.com/attend-an-event/" target="_blank" rel="noopener noreferrer">Union Hall, megközelítés és térkép</a>
+    <a href="https://konzinfo.mfa.gov.hu/utazasi-tanacsok-orszagonkent/thaifold" target="_blank" rel="noopener noreferrer">Konzuli Szolgálat, Thaiföld</a>
+    <a href="https://bangkok.mfa.gov.hu/en/konzuli-tajekoztatas" target="_blank" rel="noopener noreferrer">Bangkoki magyar nagykövetség</a>
+    <a href="https://global.ceair.com/global/en_static/Announcement/BaggageService/CarryonBaggage/" target="_blank" rel="noopener noreferrer">China Eastern kézipoggyász</a>
+  </div>
+  <p class="note">Powerbank: csak CE és CCC jelöléssel, legfeljebb 2 db, egyenként 100 Wh-ig, kizárólag kézipoggyászban. Repülés közben nem szabad tölteni. Nem vihető be e-cigaretta, vape, THC- vagy kannabisztermék.</p>
+</section>
+
+<div class="pager" id="pager"></div>
+
+<footer>Forrás: Thaiföld 2026 utazási tájékoztató. A transzferek, a találkozópont és a szobabeosztás még nem végleges, Zsolt külön értesít.</footer>
+</div>
+
+<script>
+(function(){
+  var KEY = "thaifold2026-short-v3";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch(e) { state = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e) {} }
+
+  var deadlines = [
+    {id:"d-szallas", date:"2026-11-20", label:"nov. 20.", t:"Szállásdíj befizetése: 77 500 Ft", s:"Utalás Papp Zsoltnak, közlemény: a neved."},
+    {id:"d-biz", date:"2026-11-27", label:"nov. 27.", t:"Biztosítás díja: felnőtt 11 400 Ft", s:"A dec. 14-ig szóló csomag, a jóváírás levonása után."},
+    {id:"d-tdac", date:"2026-12-02", label:"dec. 2.", t:"TDAC kitöltése (dec. 2. és dec. 4. között)", s:"Érkezési járat: MU541, érkezési dátum: dec. 5. Mentsd el a visszaigazolást, nyomtasd ki.", l:[["TDAC kitöltése","https://tdac.immigration.go.th/"],["Kitöltési útmutató","https://tdac.immigration.go.th/manual/en/"]]},
+    {id:"d-konzinfo", date:"2026-12-04", label:"indulás előtt", t:"Konzuli regisztráció (Konzinfo)", s:"A tájékoztató nem ad rá külön határidőt. Intézd el indulás előtt, legkésőbb dec. 4-ig. Ország: Thaiföld. Az utazás célja: Turizmus. Az utazás típusa: Egyéni.", l:[["Konzinfo Ügysegéd","https://konzinfougyseged.mfa.gov.hu/"]]},
+    {id:"d-nevezes", date:"2026-12-04", label:"dec. 4.", t:"Nevezési díj", s:"Magyarországról indulóknak 0 Ft a jóváírás után. Ellenőrizd Zsoltnál."},
+    {id:"d-gyul", date:"2026-12-04", label:"dec. 4. 07:30", t:"Gyülekező a Liszt Ferenc repülőtéren", s:"Útlevéllel. A járat 11:30-kor indul (MU8640)."}
+  ];
+
+  var flights = [
+    {c:"MU8640", r:"Budapest → Sanghaj", t:"dec. 4. 11:30 → dec. 5. 05:25", home:false},
+    {c:"MU541", r:"Sanghaj → Bangkok", t:"dec. 5. 08:35 → 12:20", home:false},
+    {c:"MU8612", r:"Bangkok → Sanghaj", t:"dec. 13. 19:05 → dec. 14. 00:20", home:true},
+    {c:"MU8639", r:"Sanghaj → Budapest", t:"dec. 14. 02:25 → 07:05", home:true}
+  ];
+
+  var groups = [
+    {id:"iratok", title:"Iratok és kézipoggyász", items:[
+      ["Útlevél, legalább 2027. június 5-ig érvényes, szabad oldallal","A személyi igazolvány nem helyettesíti."],
+      ["Beutazási jogosultság, szükség esetén kinyomtatott e-vízum","Sportolóknak S kategóriájú vízum (30 EUR), 5–15 munkanap ügyintézés.",[["Thai e-Visa","https://www.thaievisa.go.th/"],["S vízum, budapesti thai nagykövetség","https://budapest.thaiembassy.org/en/publicservice/transit-visa-ts"]]],
+      ["TDAC-visszaigazolás nyomtatva és offline mentve","",[["TDAC","https://tdac.immigration.go.th/"],["Útmutató","https://tdac.immigration.go.th/manual/en/"]]],
+      ["Jegyek, szállásadatok, biztosítás és assistance-szám",""],
+      ["Konzuli regisztráció (Konzinfo)","Ország: Thaiföld. Az utazás célja: Turizmus. Az utazás típusa: Egyéni.",[["Konzinfo Ügysegéd","https://konzinfougyseged.mfa.gov.hu/"],["Thaiföld, aktuális tudnivalók","https://konzinfo.mfa.gov.hu/utazasi-tanacsok-orszagonkent/thaifold"]]],
+      ["Bankkártya, készpénz és külön tárolt tartalék","Kis címletek, második kártya másik helyen."],
+      ["Feltöltött telefon, töltő, szabályos CE+CCC powerbank","Max. 2 db, egyenként 100 Wh-ig, csak kézipoggyászban.",[["China Eastern powerbank-szabályok","https://global.ceair.com/global/en_static/Announcement/BaggageService/RegulationsonSafeTransportationofLithiumBatteries/"]]],
+      ["Egy teljes meccsfelszerelés a kézipoggyászban","Kézipoggyász: 1 db, max. 8 kg, 55 × 40 × 20 cm.",[["Kézipoggyász-szabályok","https://global.ceair.com/global/en_static/Announcement/BaggageService/CarryonBaggage/"],["Feladott poggyász","https://global.ceair.com/global/en_USD/Announcement/BaggageService/FreeBaggageAllowanceandSpecifications/"]]],
+      ["Váltás póló, alsónemű, zokni, pulóver, könnyen elérhető kabát",""],
+      ["Üres kulacs, 100 ml-es tisztálkodószerek","Legfeljebb 100 ml-es tartály, egy átlátszó, max. 1 literes tasakban."],
+      ["Fülhallgató, szemmaszk, füldugó, nyakpárna",""]
+    ]},
+    {id:"ruha", title:"Ruházat és sportfelszerelés", items:[
+      ["6–8 könnyű póló, 3–4 rövidnadrág, 1–2 hosszúnadrág","Kilenc napra helyi mosással kevesebb is elég."],
+      ["Pulóver, alsónemű, zokni, alvóruha",""],
+      ["Fürdőruha, papucs vagy szandál, kényelmes utcai cipő",""],
+      ["Napszemüveg, napellenzős sapka, könnyű esőkabát",""],
+      ["Hivatalos válogatott mezek",""],
+      ["2–3 garnitúra edzőruha, sportzokni",""],
+      ["Beltéri sportcipő, lehetőleg tartalékkal",""],
+      ["Térdvédő, sporttape, bokarögzítő, egyéni védőfelszerelés",""],
+      ["Sporttörölköző, kulacs, kisebb sporttáska",""]
+    ]},
+    {id:"egeszseg", title:"Higiénia, egészség, elektronika", items:[
+      ["Fogkefe, fogkrém, dezodor, tusfürdő, sampon, egyéni higiéniai termékek",""],
+      ["Naptej, szúnyogriasztó, kézfertőtlenítő","A szúnyogriasztót nappal is használd."],
+      ["Seb- és hólyagtapasz",""],
+      ["Orális rehidráló por (ORS), eredeti csomagolású elektrolitpor",""],
+      ["Szemüveg vagy kontaktlencse és ápolófolyadék",""],
+      ["Utazóadapter, többportos USB-töltő (100–240 V jelöléssel)","Thaiföldön A, B, C, O típusú aljzat.",[["Aljzattípusok","https://www.am2026thailand.go.th/electrical-info-and-devices"]]],
+      ["Működő thaiföldi mobilinternet (eSIM vagy helyi SIM)","A magyar SIM-en kapcsold ki az adatroamingot.",[["AIS turista SIM/eSIM","https://www.ais.th/en/consumers/package/international/tourist-plan"]]],
+      ["Offline iratok és térképek (Maps.me), letöltött fordítócsomag","Töltsd le itthon a megfelelő régiókat.",[["Maps.me","http://maps.me"]]],
+      ["Működő banki belépés és banki SMS-fogadás",""],
+      ["Elmentett telefonszámok és a szállás címe offline",""],
+      ["Alkalmazások: Grab, Google Maps, Konzinfo Utazom, csapatcsoport",""]
+    ]},
+    {id:"orvos", title:"Orvosi és sportjogi teendők", items:[
+      ["Utazás-egészségügyi tanács kérése, rutinoltások ellenőrzése","MMR, tetanusz, hepatitis A, egyéni kockázat szerint más.",[["NNGYK oltóközpont","https://nngyk.gov.hu/hu/oltokozpont.html"],["CDC, Thaiföld","https://wwwnc.cdc.gov/travel/destinations/traveler/none/thailand"]]],
+      ["Étrend-kiegészítők hatóanyagának ellenőrzése a 2026-os WADA-listán","Ismeretlen összetételű terméket ne fogyassz. Kockázat esetén indulás előtt, privátban jelezd Zsoltnak.",[["WADA 2026-os tiltólista","https://www.wada-ama.org/sites/default/files/2025-09/2026list_en_final_clean_september_2025.pdf"],["WDBF doppingszabályok","https://worlddodgeballfederation.com/about-us/anti-doping/"]]]
+    ]}
+  ];
+
+  var todayMs = new Date(); todayMs.setHours(0,0,0,0);
+
+  function daysLeft(iso){
+    var p = iso.split("-");
+    var d = new Date(+p[0], +p[1]-1, +p[2]);
+    return Math.round((d - todayMs) / 86400000);
+  }
+
+  function el(tag, cls, html){ var e = document.createElement(tag); if(cls) e.className = cls; if(html!=null) e.innerHTML = html; return e; }
+
+  function lk(links){
+    if(!links) return "";
+    return links.map(function(l){ return '<a href="'+l[1]+'" target="_blank" rel="noopener noreferrer">'+l[0]+'</a>'; }).join(" · ");
+  }
+  var allIds = [];
+
+  // Határidők
+  var dlBox = document.getElementById("deadlines");
+  deadlines.forEach(function(d){
+    allIds.push(d.id);
+    var row = el("div","dl");
+    var lab = el("label");
+    var cb = el("input"); cb.type = "checkbox"; cb.id = d.id; cb.checked = !!state[d.id];
+    var date = el("span","date", d.label);
+    var what = el("span","what","<b>"+d.t+"</b><span>"+d.s+(d.l ? "<br>"+lk(d.l) : "")+"</span>");
+    var pill = el("span","pill");
+    function paint(){
+      row.classList.toggle("checked", cb.checked);
+      var n = daysLeft(d.date);
+      pill.className = "pill";
+      if(cb.checked){ pill.textContent = "kész"; pill.classList.add("done"); }
+      else if(n < 0){ pill.textContent = Math.abs(n)+" napja lejárt"; pill.classList.add("soon"); }
+      else if(n === 0){ pill.textContent = "ma"; pill.classList.add("soon"); }
+      else if(n === 1){ pill.textContent = "holnap"; pill.classList.add("soon"); }
+      else { pill.textContent = n+" nap"; if(n <= 7) pill.classList.add("soon"); }
+    }
+    cb.addEventListener("change", function(){ state[d.id] = cb.checked; save(); paint(); update(); });
+    paint();
+    // sorrend: pipa, dátum, szöveg
+    var left = el("span"); left.style.display = "none";
+    lab.appendChild(date); lab.appendChild(what);
+    var cbWrap = el("span"); cbWrap.appendChild(cb);
+    row.appendChild(date);
+    var mid = el("label","what"); mid.style.display="flex"; mid.style.gap="10px"; mid.style.cursor="pointer";
+    mid.appendChild(cb); mid.appendChild(what);
+    row.appendChild(mid); row.appendChild(pill);
+    dlBox.appendChild(row);
+  });
+
+  // Járatok
+  var fl = document.getElementById("flights");
+  flights.forEach(function(f){
+    var d = el("div","leg"+(f.home?" home":""));
+    d.innerHTML = '<span class="code">'+f.c+(f.home?" · hazaút":" · odaút")+'</span><span class="route">'+f.r+'</span><span class="time">'+f.t+'</span><span class="bag">Kézi 1 × 8 kg · feladott 2 × 23 kg</span>';
+    fl.appendChild(d);
+  });
+
+  // Egyéni tételek (külön tárolva)
+  var KEY2 = "thaifold2026-custom-v1";
+  var cstore = {items:{}, deleted:{}, costs:[]};
+  try { var raw = JSON.parse(localStorage.getItem(KEY2) || "null"); if(raw){ cstore.items = raw.items || {}; cstore.deleted = raw.deleted || {}; cstore.costs = raw.costs || []; } } catch(e) {}
+  function csave(){ try { localStorage.setItem(KEY2, JSON.stringify(cstore)); } catch(e) {} }
+  function uid(){ return "c-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+  function itemsOf(g){
+    var out = [];
+    g.items.forEach(function(it, i){
+      var id = g.id+"-"+i;
+      if(!cstore.deleted[id]) out.push({id:id, t:it[0], s:it[1], l:it[2], custom:false});
+    });
+    (cstore.items[g.id] || []).forEach(function(c){ out.push({id:c.id, t:c.t, custom:true}); });
+    return out;
+  }
+
+  // Listák
+  var lists = document.getElementById("lists");
+  function renderLists(focusGid){
+    Array.prototype.slice.call(lists.querySelectorAll(".group")).forEach(function(n){ n.remove(); });
+    allIds = allIds.filter(function(id){ return id.indexOf("d-") === 0; });
+    groups.forEach(function(g){
+      var box = el("div","group");
+      var wrapHead = el("header");
+      wrapHead.innerHTML = "<h3>"+g.title+"</h3><span class='count' id='cnt-"+g.id+"'></span>";
+      box.appendChild(wrapHead);
+      itemsOf(g).forEach(function(it){
+        var id = it.id;
+        allIds.push(id);
+        var lab = el("label","item");
+        var cb = el("input"); cb.type = "checkbox"; cb.id = id; cb.checked = !!state[id];
+        var txt = el("span","grow");
+        if(it.custom){ txt.textContent = it.t; }
+        else { txt.innerHTML = it.t + ((it.s || it.l) ? "<small>"+(it.s||"")+(it.s && it.l ? "<br>" : "")+lk(it.l)+"</small>" : ""); }
+        var del = el("button","del","×"); del.type = "button"; del.setAttribute("aria-label","Tétel törlése"); del.title = "Törlés";
+        lab.appendChild(cb); lab.appendChild(txt); lab.appendChild(del);
+        lab.classList.toggle("checked", cb.checked);
+        cb.addEventListener("change", function(){ state[id] = cb.checked; lab.classList.toggle("checked", cb.checked); save(); update(); });
+        del.addEventListener("click", function(ev){
+          ev.preventDefault(); ev.stopPropagation();
+          if(it.custom){ cstore.items[g.id] = (cstore.items[g.id] || []).filter(function(c){ return c.id !== id; }); }
+          else { cstore.deleted[id] = true; }
+          delete state[id]; save(); csave(); renderLists(); update();
+        });
+        box.appendChild(lab);
+      });
+      var form = el("form","addform"); form.autocomplete = "off";
+      var inp = el("input"); inp.type = "text"; inp.id = "add-"+g.id; inp.placeholder = "Saját tétel hozzáadása"; inp.maxLength = 120; inp.setAttribute("aria-label","Saját tétel hozzáadása: "+g.title);
+      var btn = el("button","", "Hozzáadás"); btn.type = "submit";
+      form.appendChild(inp); form.appendChild(btn);
+      form.addEventListener("submit", function(ev){
+        ev.preventDefault();
+        var v = inp.value.trim(); if(!v) return;
+        (cstore.items[g.id] = cstore.items[g.id] || []).push({id:uid(), t:v});
+        csave(); renderLists(g.id); update();
+      });
+      box.appendChild(form);
+      lists.appendChild(box);
+    });
+    var any = false; for(var k in cstore.deleted){ if(cstore.deleted[k]) any = true; }
+    document.getElementById("restoreDel").hidden = !any;
+    if(focusGid){ var f = document.getElementById("add-"+focusGid); if(f) f.focus(); }
+  }
+  renderLists();
+  document.getElementById("restoreDel").addEventListener("click", function(){ cstore.deleted = {}; csave(); renderLists(); update(); });
+
+  function fmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0"); }
+  var RATE = 9.4, LO = 75200, HI = 122200;
+  var SCOPE = {egyszeri:"egyszeri", naponta:"naponta (9 nap)", egesz:"az egész útra"};
+  function customFt(c){ return Math.round(c.amt * (c.cur === "THB" ? RATE : 1) * (c.scope === "naponta" ? 9 : 1)); }
+  function renderCustomCosts(){
+    var tb = document.getElementById("customBody");
+    tb.innerHTML = "";
+    var sec = el("tr","sec"); sec.innerHTML = '<th colspan="5">4. Saját tételek</th>'; tb.appendChild(sec);
+    if(!cstore.costs.length){
+      var em = el("tr","empty"); em.innerHTML = '<td colspan="5">Még nincs saját tétel. Az alábbi űrlappal adhatsz hozzá.</td>'; tb.appendChild(em);
+    }
+    cstore.costs.forEach(function(c){
+      var tr = el("tr");
+      var td1 = el("td"); var wrap = el("div"); wrap.style.cssText = "display:flex;align-items:center;gap:8px";
+      var nm = el("span"); nm.textContent = c.n; nm.style.flex = "1";
+      var del = el("button","del","×"); del.type = "button"; del.setAttribute("aria-label","Tétel törlése"); del.title = "Törlés";
+      del.style.marginLeft = "0";
+      del.addEventListener("click", function(){ cstore.costs = cstore.costs.filter(function(x){ return x.id !== c.id; }); csave(); renderCustomCosts(); updateCosts(); });
+      wrap.appendChild(nm); wrap.appendChild(del); td1.appendChild(wrap); tr.appendChild(td1);
+      tr.appendChild(el("td","", SCOPE[c.scope] || ""));
+      tr.appendChild(el("td","", ""));
+      tr.appendChild(el("td","n", fmt(c.amt)+" "+(c.cur === "THB" ? "THB" : "Ft")+(c.scope === "naponta" ? " × 9" : "")));
+      tr.appendChild(el("td","n", fmt(customFt(c))));
+      tb.appendChild(tr);
+    });
+  }
+  function updateCosts(){
+    var rem = 0, rows = document.querySelectorAll("tr[data-dl]"), open = 0;
+    Array.prototype.forEach.call(rows, function(r){
+      var paid = !!state[r.dataset.dl];
+      r.hidden = paid;
+      if(!paid){ rem += +r.dataset.ft; open++; }
+    });
+    var cust = 0; cstore.costs.forEach(function(c){ cust += customFt(c); });
+    document.getElementById("homeSub").textContent = fmt(rem);
+    document.getElementById("homeTile").textContent = fmt(rem)+" Ft";
+    document.getElementById("homeFoot").textContent = fmt(rem)+" Ft";
+    var tot = fmt(rem+cust+LO)+"–"+fmt(rem+cust+HI)+" Ft";
+    document.getElementById("totTile").textContent = tot;
+    document.getElementById("totFoot").textContent = tot;
+    document.getElementById("allPaid").hidden = open > 0;
+    document.getElementById("customTile").hidden = !cstore.costs.length;
+    document.getElementById("customFootRow").hidden = !cstore.costs.length;
+    document.getElementById("customTileV").textContent = fmt(cust)+" Ft";
+    document.getElementById("customFoot").textContent = fmt(cust)+" Ft";
+  }
+  renderCustomCosts();
+  document.getElementById("costForm").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var n = document.getElementById("cName").value.trim();
+    var a = parseFloat(document.getElementById("cAmt").value);
+    if(!n || !(a >= 0)) return;
+    cstore.costs.push({id:uid(), n:n, amt:a, cur:document.getElementById("cCur").value, scope:document.getElementById("cScope").value});
+    csave();
+    document.getElementById("cName").value = ""; document.getElementById("cAmt").value = "";
+    renderCustomCosts(); updateCosts();
+    document.getElementById("cName").focus();
+  });
+  function update(){
+    updateCosts();
+    var done = allIds.filter(function(id){ return state[id]; }).length;
+    var total = allIds.length;
+    var pct = total ? Math.round(done/total*100) : 0;
+    document.getElementById("pct").textContent = pct+"%";
+    document.getElementById("bar").style.width = pct+"%";
+    document.getElementById("barwrap").setAttribute("aria-valuenow", pct);
+    document.getElementById("pctText").textContent = done+" / "+total+" tétel kész";
+    groups.forEach(function(g){
+      var its = itemsOf(g), d = 0; its.forEach(function(x){ if(state[x.id]) d++; });
+      var c = document.getElementById("cnt-"+g.id); if(c) c.textContent = d+" / "+its.length;
+    });
+  }
+
+  document.getElementById("hideDone").addEventListener("click", function(){
+    var on = this.getAttribute("aria-pressed") !== "true";
+    this.setAttribute("aria-pressed", on ? "true" : "false");
+    document.getElementById("lists").classList.toggle("hide-done", on);
+  });
+
+  document.getElementById("reset").addEventListener("click", function(){
+    if(this.dataset.armed !== "1"){
+      this.dataset.armed = "1"; this.textContent = "Biztosan? Kattints még egyszer";
+      var b = this; setTimeout(function(){ b.dataset.armed = ""; b.textContent = "Összes pipa törlése"; }, 3500);
+      return;
+    }
+    state = {}; save();
+    document.querySelectorAll("input[type=checkbox]").forEach(function(c){ c.checked = false; c.dispatchEvent(new Event("change")); });
+    this.dataset.armed = ""; this.textContent = "Összes pipa törlése";
+  });
+
+  document.getElementById("copyLeft").addEventListener("click", function(){
+    var btn = this;
+    var lines = [];
+    deadlines.forEach(function(d){ if(!state[d.id]) lines.push("[ ] "+d.label+" – "+d.t); });
+    groups.forEach(function(g){ itemsOf(g).forEach(function(it){ if(!state[it.id]) lines.push("[ ] "+it.t); }); });
+    var text = lines.join("\n");
+    function ok(){ btn.textContent = "Kimásolva"; setTimeout(function(){ btn.textContent = "Hiányzók másolása"; }, 1800); }
+    try {
+      navigator.clipboard.writeText(text).then(ok, function(){ btn.textContent = "A másolás nem sikerült"; });
+    } catch(e) { btn.textContent = "A másolás nem sikerült"; }
+  });
+
+  var ca = document.getElementById("copyAddr");
+  if(ca){ ca.addEventListener("click", function(){
+    var btn = ca;
+    function done(t){ btn.textContent = t; setTimeout(function(){ btn.textContent = "Cím másolása"; }, 1800); }
+    try { navigator.clipboard.writeText("Harmony Living Condominium, 77 Sukhumvit Soi 15, Bangkok 10110, Thailand").then(function(){ done("Kimásolva"); }, function(){ done("A másolás nem sikerült"); }); }
+    catch(e){ done("A másolás nem sikerült"); }
+  }); }
+
+  var PAGES = [
+    ["hatarido","Határidők"],["utazas","Járat és szállás"],["koltsegek","Költségek"],["lista","Lista"],["kapcsolatok","Fontos kapcsolatok"]
+  ];
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".nav a"));
+  var pager = document.getElementById("pager");
+  function show(page, push){
+    if(!PAGES.some(function(p){ return p[0] === page; })) page = "hatarido";
+    Array.prototype.forEach.call(document.querySelectorAll("[data-page]"), function(s){ s.hidden = s.dataset.page !== page; });
+    var firstSet = false;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-page]"), function(s){
+      s.classList.remove("first");
+      if(!s.hidden && !firstSet){ s.classList.add("first"); firstSet = true; }
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-tools]"), function(s){ s.hidden = s.dataset.tools !== page; });
+    tabs.forEach(function(a){
+      var on = a.dataset.tab === page;
+      a.classList.toggle("on", on);
+      a.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    var i = PAGES.findIndex(function(p){ return p[0] === page; });
+    pager.innerHTML = "";
+    if(i > 0){ var b = document.createElement("a"); b.href = "#"+PAGES[i-1][0]; b.className = "prev"; b.textContent = "\u2190 "+PAGES[i-1][1]; pager.appendChild(b); }
+    if(i < PAGES.length-1){ var n = document.createElement("a"); n.href = "#"+PAGES[i+1][0]; n.className = "next"; n.textContent = PAGES[i+1][1]+" \u2192"; pager.appendChild(n); }
+    if(push){ try { window.scrollTo(0, 0); } catch(e) {} }
+  }
+  function fromHash(push){ show((location.hash || "").replace("#",""), push); }
+  window.addEventListener("hashchange", function(){ fromHash(true); });
+  fromHash(false);
+  // Közvetlen kattintáskezelés: a beágyazott nézetben a #hash-váltás nem mindig fut le
+  document.addEventListener("click", function(ev){
+    var a = ev.target && ev.target.closest ? ev.target.closest("a[href^='#']") : null;
+    if(!a) return;
+    var id = a.getAttribute("href").slice(1);
+    if(!PAGES.some(function(p){ return p[0] === id; })) return;
+    ev.preventDefault();
+    show(id, true);
+    try { history.replaceState(null, "", "#"+id); } catch(e) {}
+  });
+
+  // Dokumentumlista pipák
+  var docBoxes = Array.prototype.slice.call(document.querySelectorAll(".docchk"));
+  function updateDocs(){
+    var d = 0;
+    docBoxes.forEach(function(b){ var on = !!state[b.id]; b.checked = on; b.closest("tr").classList.toggle("checked", on); if(on) d++; });
+    var c = document.getElementById("docCnt"); if(c) c.textContent = d+" / "+docBoxes.length;
+  }
+  docBoxes.forEach(function(b){
+    b.addEventListener("change", function(){ state[b.id] = b.checked; save(); updateDocs(); });
+  });
+  updateDocs();
+
+  // Pontos idő: Bangkok és Budapest
+  function tzOffsetMin(tz, d){
+    var f = new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    var p = {}; f.formatToParts(d).forEach(function(x){ p[x.type] = x.value; });
+    var hr = p.hour === "24" ? 0 : +p.hour;
+    return Math.round((Date.UTC(+p.year, +p.month-1, +p.day, hr, +p.minute, +p.second) - Math.floor(d.getTime()/1000)*1000) / 60000);
+  }
+  function tickClocks(){
+    var box = document.getElementById("clocks");
+    if(!box) return;
+    try {
+      var now = new Date();
+      var opt = function(tz){ return new Intl.DateTimeFormat("hu-HU",{timeZone:tz,hour:"2-digit",minute:"2-digit"}).format(now); };
+      var day = function(tz){ return new Intl.DateTimeFormat("hu-HU",{timeZone:tz,month:"short",day:"numeric",weekday:"short"}).format(now); };
+      var diff = Math.round((tzOffsetMin("Asia/Bangkok", now) - tzOffsetMin("Europe/Budapest", now)) / 60);
+      box.innerHTML =
+        '<div class="clock"><span>Budapest</span><b>'+opt("Europe/Budapest")+'</b><small>'+day("Europe/Budapest")+'</small></div>'+
+        '<div class="clock"><span>Bangkok</span><b>'+opt("Asia/Bangkok")+'</b><small>'+day("Asia/Bangkok")+'</small></div>'+
+        '<div class="clock diff"><span>Időeltolódás</span><b>+'+diff+' óra</b><small>Bangkok előrébb jár</small></div>';
+    } catch(e) { box.hidden = true; }
+  }
+  tickClocks();
+  setInterval(tickClocks, 20000);
+
+  // Kézi frissítés: új verzió betöltése, a pipák megmaradnak
+  var rb = document.getElementById("refreshBtn");
+  if(rb){
+    var rbText = rb.textContent;
+    var rbReset = function(msg){ rb.textContent = msg; setTimeout(function(){ rb.textContent = rbText; rb.disabled = false; }, 3200); };
+    rb.addEventListener("click", function(){
+      rb.disabled = true; rb.textContent = "Keresés…";
+      var canSW = /^https?:$/.test(location.protocol) && "serviceWorker" in navigator;
+      if(!canSW){ rbReset("Betöltés…"); try { location.reload(); } catch(e) {} return; }
+      fetch(location.pathname, {cache:"no-store"}).then(function(res){
+        if(!res.ok) throw new Error("http");
+        return (window.caches ? caches.keys().then(function(keys){ return Promise.all(keys.map(function(k){ return caches.delete(k); })); }) : Promise.resolve());
+      }).then(function(){
+        return navigator.serviceWorker.getRegistration();
+      }).then(function(reg){
+        return reg ? reg.update() : null;
+      }).then(function(){
+        rb.textContent = "Betöltés…";
+        location.reload();
+      }).catch(function(){
+        rbReset("Nincs internet, a mentett változat marad");
+      });
+    });
+  }
+
+  update();
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
