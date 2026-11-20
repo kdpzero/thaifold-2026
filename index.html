@@ -12,7 +12,7 @@
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-<meta name="app-version" content="7eb52e5bdc">
+<meta name="app-version" content="32015665b3">
 <style>
 /* Layout: egy oszlop, bal oldali sávban a haladás; fent állapotösszegzés, alatta határidők, repülők, checklista. */
 :root{
@@ -23,7 +23,7 @@
   --line:#ddd7c8;
   --accent:#0b6b5c;
   --accent-ink:#ffffff;
-  --warn:#b4491f;
+  --warn:#b4491f;--red:#d00000;
   --ok:#2f7d4f;
   --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
   --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
@@ -32,12 +32,12 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#121816;--surface:#1a2220;--ink:#eae7de;--muted:#9aa5a0;--line:#2c3733;
-    --accent:#4cc3ad;--accent-ink:#0b1412;--warn:#f08a5d;--ok:#6cc58a;color-scheme:dark;
+    --accent:#4cc3ad;--accent-ink:#0b1412;--warn:#f08a5d;--ok:#6cc58a;--red:#ff6b6b;color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#121816;--surface:#1a2220;--ink:#eae7de;--muted:#9aa5a0;--line:#2c3733;
-  --accent:#4cc3ad;--accent-ink:#0b1412;--warn:#f08a5d;--ok:#6cc58a;color-scheme:dark;
+  --accent:#4cc3ad;--accent-ink:#0b1412;--warn:#f08a5d;--ok:#6cc58a;--red:#ff6b6b;color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -226,11 +226,17 @@ table.docs tr.checked td:not(.chk){color:var(--muted);text-decoration:line-throu
 .defchk{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.95rem}
 .defchk input{width:20px;height:20px;accent-color:var(--accent)}
 .stack{display:flex;flex-direction:column;gap:14px}
+.dl details.guide{grid-column:2/-1;border:0;background:color-mix(in srgb,var(--accent) 7%,var(--surface));border-radius:8px;padding:8px 12px}
+.dl details.guide summary{font-size:.92rem}
+.gl{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;color:var(--ink);font-size:.93rem}
+.redwarn{margin:10px 0 0;padding:8px 12px;border:2px solid var(--red);border-radius:8px;color:var(--red);font-weight:800;font-size:1rem}
+.gnote{margin:8px 0 0;color:var(--muted);font-size:.85rem}
 .apps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 footer{color:var(--muted);font-size:.88rem}
 @media (max-width:520px){
   .dl{grid-template-columns:auto 1fr}
   .dl .pill{grid-column:2;justify-self:start}
+  .dl details.guide{grid-column:1/-1}
   .dl .date{grid-column:1/-1}
 }
 
@@ -617,8 +623,8 @@ footer{color:var(--muted);font-size:.88rem}
     return [
       {id:"d-szallas", date:"2026-11-20", label:"nov. 20.", t:"Szállásdíj befizetése: "+fmt(c.stayFt)+" Ft", s:"Utalás Papp Zsoltnak, közlemény: a neved."},
       {id:"d-biz", date:"2026-11-27", label:"nov. 27.", t:"Biztosítás díja: felnőtt "+fmt(c.insFt)+" Ft", s:"A "+c.insUntil+" szóló csomag ("+fmt(c.insFull)+" Ft), a jóváírás levonása után."},
-      {id:"d-tdac", date:"2026-12-02", label:"dec. 2.", t:"TDAC kitöltése (dec. 2. és dec. 4. között)", s:"Érkezési járat: MU541, érkezési dátum: dec. 5. Mentsd el a visszaigazolást, nyomtasd ki.", l:[["TDAC kitöltése","https://tdac.immigration.go.th/"],["Kitöltési útmutató","https://tdac.immigration.go.th/manual/en/"]]},
-      {id:"d-konzinfo", date:"2026-12-04", label:"indulás előtt", t:"Konzuli regisztráció (Konzinfo)", s:"A tájékoztató nem ad rá külön határidőt. Intézd el indulás előtt, legkésőbb dec. 4-ig. Ország: Thaiföld, "+c.konz+". Az utazás célja: Turizmus. Az utazás típusa: Egyéni.", l:[["Konzinfo Ügysegéd","https://konzinfougyseged.mfa.gov.hu/"]]},
+      {id:"d-tdac", date:"2026-12-02", label:"dec. 2.", t:"TDAC kitöltése (dec. 2. és dec. 4. között)", s:"Érkezési járat: MU541, érkezési dátum: dec. 5. Mentsd el a visszaigazolást, nyomtasd ki.", g:'<p class="redwarn">Az utazás célja: turizmus. A sportot említeni TILOS!</p><ol class="gl">\n<li><b>Mikor:</b> csak az érkezés előtti 3 napon belül töltheted ki, nálunk dec. 2. és dec. 4. között. Ingyenes, nem kell hozzá fiók. Csak a hivatalos oldalt használd (tdac.immigration.go.th), a díjat kérő oldalak nem hivatalosak.</li>\n<li><b>Indítás:</b> a nyitóoldalon válaszd az <i>Arrival Card</i> gombot, majd az <i>Egyéni</i> (Individual) kitöltést.</li>\n<li><b>1. Személyes adatok:</b> az útlevél szerint, nagybetűvel, ékezetek és becenév nélkül: név, útlevélszám, születési dátum, állampolgárság (Hungary), nem, foglalkozás, nemzetközi telefonszám (+36 ...). Ezek utólag nem módosíthatók, hiba esetén új kártyát kell kitölteni.</li>\n<li><b>2. Utazás:</b> érkezés dátuma: 2026. dec. 5. Közlekedés: légi. Járatszám: MU541. Indulási ország: Kína (Sanghaj). A kiutazás dátuma nem kötelező, de a továbbutazási jegyet (hazaút) a határon kérhetik.</li>\n<li><b>3. Szállás:</b> Harmony Living Condominium, 77 Sukhumvit Soi 15, Bangkok. A tartomány kiválasztása után a kerület és az alkerület mezők kitöltődnek. Ha a rendszer irányítószámot kér: 10110.</li>\n<li><b>4. Egészségügyi nyilatkozat:</b> add meg az elmúlt 14 nap országait. Itt Magyarország és a kínai átszállás (Sanghaj) jöhet szóba, add meg őket az indulás előtti 14 nap útvonala szerint. Sárgalázas országból érkezőknek oltási igazolás kell.</li>\n<li><b>5. Beküldés:</b> ellenőrizd az adatokat, add meg az e-mail-címedet, és küldd be. A visszaigazolás e-mailben érkezik, abban van a QR-kód.</li>\n<li><b>Utána:</b> mentsd el a visszaigazolást telefonra (offline is), és nyomtasd ki. Thaiföldön a kiutazásig tartsd meg. Az utazási és szállásadatok utólag javíthatók.</li>\n</ol>', l:[["TDAC kitöltése","https://tdac.immigration.go.th/"],["Kitöltési útmutató","https://tdac.immigration.go.th/manual/en/"]]},
+      {id:"d-konzinfo", date:"2026-12-04", label:"indulás előtt", t:"Konzuli regisztráció (Konzinfo)", s:"A tájékoztató nem ad rá külön határidőt. Intézd el indulás előtt, legkésőbb dec. 4-ig. Ország: Thaiföld, "+c.konz+". Az utazás célja: Turizmus. Az utazás típusa: Egyéni.", g:"<p class=\"redwarn\">Az utazás célja: turizmus. A sportot említeni TILOS!</p><ol class=\"gl\">\n<li><b>Hol:</b> a Konzinfo Ügysegéd weboldalán az <i>Adatlap konzuli védelemre</i> űrlapot válaszd, vagy a Konzinfo Utazom mobilalkalmazásban a <i>konzuli védelemre regisztrálás</i> menüpontot. A kettő ugyanazt a célt szolgálja, a telefonos app kényelmesebb.</li>\n<li><b>Személyes adatok:</b> név és születési adatok az útlevél szerint, állampolgárság, útlevélszám, elérhetőségeid (telefonszám, e-mail).</li>\n<li><b>Utazás adatai:</b> ország: Thaiföld. Az utazás célja: Turizmus. Az utazás típusa: Egyéni. A tartózkodás ideje: dec. 4. és a hazautazásod napja, KONZ_PLACEHOLDER.</li>\n<li><b>Külföldi cím:</b> Harmony Living Condominium, 77 Sukhumvit Soi 15, Bangkok, 10110, Thaiföld.</li>\n<li><b>Kapcsolattartó:</b> adj meg egy itthoni hozzátartozót vagy ismerőst, akit baj esetén érhetnek.</li>\n<li><b>Beküldés:</b> fogadd el az adatkezelési nyilatkozatot, és küldd be. Mentsd el a visszaigazolást vagy a képernyőképet.</li>\n</ol>\n<p class=\"gnote\">A mezők neve a mobilapp és a weboldal között kissé eltérhet, az utazás céljához és típusához a fenti választást használd.</p>".replace("KONZ_PLACEHOLDER", c.konz), l:[["Konzinfo Ügysegéd","https://konzinfougyseged.mfa.gov.hu/"],["Konzinfo Utazom (App Store)","https://apps.apple.com/app/id1600676404"]]},
       {id:"d-nevezes", date:"2026-12-04", label:"dec. 4.", t:"Nevezési díj", s:"Magyarországról indulóknak 0 Ft a jóváírás után. Ellenőrizd Zsoltnál."},
       {id:"d-gyul", date:"2026-12-04", label:"dec. 4. 07:30", t:"Gyülekező a Liszt Ferenc repülőtéren", s:"Útlevéllel. A járat 11:30-kor indul (MU8640)."}
     ];
@@ -675,6 +681,7 @@ footer{color:var(--muted);font-size:.88rem}
   ];
 
   groups[0].extra = [
+    {id:"iratok-szuloi", mode:"mind", t:"Szülői hozzájárulás dokumentuma", s:"A dokumentum még nem érkezett meg. Ha megjön, ide kerül a letöltési link. Addig csak jelzőtétel."},
     {id:"iratok-cn", mode:"hosszu", t:"Kínai Arrival Card kitöltése a sanghaji városnézéshez", s:"Ingyenes. Online vagy a helyszínen is kitölthető. Legyen nálad útlevél, továbbutazási igazolás és a csapat elérhetősége.", l:[["Kínai Arrival Card","https://s.nia.gov.cn/ArrivalCardFillingPC/"],["Szabályok","https://en.nia.gov.cn/n147418/n147468/c187308/content.html"],["Vízummentesség, nagykövetségi tájékoztató","https://hu.china-embassy.gov.cn/hu./lsyw/vizum1/202511/t20251105_11747190.htm"]]}
   ];
   groups[1].extra = [
@@ -743,6 +750,10 @@ footer{color:var(--muted);font-size:.88rem}
       var mid = el("label","what"); mid.style.display="flex"; mid.style.gap="10px"; mid.style.cursor="pointer";
       mid.appendChild(cb); mid.appendChild(what);
       row.appendChild(mid); row.appendChild(pill);
+      if(d.g){
+        var gd = el("details","guide"); gd.innerHTML = "<summary>Kitöltési útmutató</summary>"+d.g;
+        row.appendChild(gd);
+      }
       dlBox.appendChild(row);
     });
   }
@@ -781,7 +792,7 @@ footer{color:var(--muted);font-size:.88rem}
       out.push({id:id, t:it[0], s:s, l:it[2], custom:false});
     });
     (g.extra || []).forEach(function(x){
-      if(x.mode === MODE && !cstore.deleted[x.id]) out.push({id:x.id, t:x.t, s:x.s, l:x.l, custom:false});
+      if((x.mode === MODE || x.mode === "mind") && !cstore.deleted[x.id]) out.push({id:x.id, t:x.t, s:x.s, l:x.l, custom:false});
     });
     (cstore.items[g.id] || []).forEach(function(c){ out.push({id:c.id, t:c.t, custom:true}); });
     return out;
