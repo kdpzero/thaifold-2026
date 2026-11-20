@@ -12,7 +12,7 @@
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-<meta name="app-version" content="32015665b3">
+<meta name="app-version" content="411a2f4343">
 <style>
 /* Layout: egy oszlop, bal oldali sávban a haladás; fent állapotösszegzés, alatta határidők, repülők, checklista. */
 :root{
@@ -681,7 +681,7 @@ footer{color:var(--muted);font-size:.88rem}
   ];
 
   groups[0].extra = [
-    {id:"iratok-szuloi", mode:"mind", t:"Szülői hozzájárulás dokumentuma", s:"A dokumentum még nem érkezett meg. Ha megjön, ide kerül a letöltési link. Addig csak jelzőtétel."},
+    {id:"iratok-szuloi", mode:"mind", after:1, t:"Szülői hozzájárulás dokumentuma", s:"A dokumentum még nem érkezett meg. Ha megjön, ide kerül a letöltési link. Addig csak jelzőtétel."},
     {id:"iratok-cn", mode:"hosszu", t:"Kínai Arrival Card kitöltése a sanghaji városnézéshez", s:"Ingyenes. Online vagy a helyszínen is kitölthető. Legyen nálad útlevél, továbbutazási igazolás és a csapat elérhetősége.", l:[["Kínai Arrival Card","https://s.nia.gov.cn/ArrivalCardFillingPC/"],["Szabályok","https://en.nia.gov.cn/n147418/n147468/c187308/content.html"],["Vízummentesség, nagykövetségi tájékoztató","https://hu.china-embassy.gov.cn/hu./lsyw/vizum1/202511/t20251105_11747190.htm"]]}
   ];
   groups[1].extra = [
@@ -784,16 +784,18 @@ footer{color:var(--muted);font-size:.88rem}
 
   function itemsOf(g){
     var out = [];
+    function ex(x){ return (x.mode === MODE || x.mode === "mind") && !cstore.deleted[x.id]; }
+    function push(x){ out.push({id:x.id, t:x.t, s:x.s, l:x.l, custom:false}); }
     g.items.forEach(function(it, i){
       var id = g.id+"-"+i;
-      if(cstore.deleted[id]) return;
-      var s = it[1], sb = subBy[id];
-      if(sb && sb[MODE] != null) s = sb[MODE];
-      out.push({id:id, t:it[0], s:s, l:it[2], custom:false});
+      if(!cstore.deleted[id]){
+        var s = it[1], sb = subBy[id];
+        if(sb && sb[MODE] != null) s = sb[MODE];
+        out.push({id:id, t:it[0], s:s, l:it[2], custom:false});
+      }
+      (g.extra || []).forEach(function(x){ if(x.after === i && ex(x)) push(x); });
     });
-    (g.extra || []).forEach(function(x){
-      if((x.mode === MODE || x.mode === "mind") && !cstore.deleted[x.id]) out.push({id:x.id, t:x.t, s:x.s, l:x.l, custom:false});
-    });
+    (g.extra || []).forEach(function(x){ if(x.after == null && ex(x)) push(x); });
     (cstore.items[g.id] || []).forEach(function(c){ out.push({id:c.id, t:c.t, custom:true}); });
     return out;
   }
